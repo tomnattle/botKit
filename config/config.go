@@ -9,13 +9,14 @@ import (
 	"strings"
 )
 
-const (
-	AppName string = "tsketch"
-)
+func LoadConfig() error {
+	return nil
+}
 
 type Config struct {
 	AppID     int              `toml:"AppID"`
 	SubAppID  int              `toml:"SubAppID"`
+	AppName   string           `toml:"AppName"`
 	Addr      string           `toml:"Addr"`
 	Logger    *LoggerConfig    `toml:"Log"`
 	MySQL     *MySQLConfig     `toml:"MySQL"`
