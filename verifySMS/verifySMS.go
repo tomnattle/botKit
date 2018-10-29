@@ -38,7 +38,7 @@ func SendVerifySMS(phone string) error {
 		return err
 	}
 	authCode := authCodeGenerator()
-	env := *config.GetEnvironment()
+	env := config.GetEnvironment()
 	if env == config.TEST || env == config.DEV {
 		phoneRunes := []rune(phone)
 		authCodeRunes := make([]rune, 6)
