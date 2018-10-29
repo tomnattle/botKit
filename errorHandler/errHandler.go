@@ -78,12 +78,19 @@ func ErrHandler(err error, c echo.Context) {
 	)
 
 	if errC, ok := err.(*errCommon); ok {
-		msg.Code = errC.errCode
-		msg.Msg = errC.errMsg
-		logMsg = errC.logMsg
+		switch config.GetEnvironment() {
+		case config.DEV, config.TEST:
+			msg.Code = errC.errCode
+			msg.Msg = errC.errMsg + errC.logMsg
+			logMsg = errC.logMsg
+		default:
+			msg.Code = errC.errCode
+			msg.Msg = errC.errMsg
+			logMsg = errC.logMsg
+		}
 	} else {
 		msg.Code = -1
-		msg.Msg = err.Error()
+		msg.Msg = "SYSTEM ERROR, please call backend ASAP"
 		logMsg = err.Error()
 	}
 
@@ -100,5 +107,4 @@ func ErrHandler(err error, c echo.Context) {
 			c.Logger().Error(err)
 		}
 	}
-
 }

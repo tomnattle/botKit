@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	environment *Environment
-	config      *Config
+	environment Environment
 	configFile  string
+	config      *Config
 )
 
 type Config struct {
@@ -74,8 +74,8 @@ const (
 	PROD
 )
 
-func (e *Environment) String() string {
-	switch *e {
+func (e Environment) String() string {
+	switch e {
 	case DEV:
 		return "dev"
 	case TEST:
@@ -93,23 +93,20 @@ func GetConfig() *Config {
 	return config
 }
 
-func GetEnvironment() *Environment {
+func GetEnvironment() Environment {
 	return environment
 }
 
 func initEnvironment() {
 	switch config.Environment {
 	case "dev":
-		formatE := DEV
-		environment = &formatE
+		environment = DEV
 	case "test":
-		formatE := TEST
-		environment = &formatE
+		environment = TEST
 	case "prod":
-		formatE := PROD
-		environment = &formatE
+		environment = PROD
 	}
-	if environment == nil {
+	if uint8(environment) == 0 {
 		panic(fmt.Errorf("init config error, try find environment error"))
 	}
 }
