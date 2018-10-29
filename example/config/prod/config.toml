@@ -1,0 +1,31 @@
+AppID       = 20
+SubAppID    = 3
+AppName     = "botKit"
+Environment = "prod"
+Addr        = ":63339"
+
+[Log]
+LogFile     = "/opt/log/botKit.log"
+
+[MySQL]
+Username    = "devuser"
+Password    = "devuser"
+Addr        = "192.168.1.174:3306"
+DB          = "botKit"
+
+[Redis]
+IsCluster   = false
+Addr        = "192.168.1.174:6379"
+PoolSize    = 10
+Prefix      = "botKit_"
+
+[SMS]
+URL                     = "http://dev.toh.rpc/message_receive"
+Account                 = "N002563_N6360201"
+Model                   = "【e成】您的验证码为%s，此验证码%d分钟内有效。欢迎使用决胜力！e成科技，助力人才战略成功的AI平台。"
+Secret                  = "fda50f228813a1777e40878fc44bd9b7"
+DurationMinutes         = 1
+AuthCodeDurationMinutes = 3
+
+[Signature]
+SecretKey = "secret-key"
