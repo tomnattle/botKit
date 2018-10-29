@@ -9,14 +9,13 @@ import (
 	"strings"
 )
 
-func LoadConfig() error {
-	return nil
-}
+const (
+	AppName string = "winMode"
+)
 
 type Config struct {
 	AppID     int              `toml:"AppID"`
 	SubAppID  int              `toml:"SubAppID"`
-	AppName   string           `toml:"AppName"`
 	Addr      string           `toml:"Addr"`
 	Logger    *LoggerConfig    `toml:"Log"`
 	MySQL     *MySQLConfig     `toml:"MySQL"`
@@ -44,11 +43,12 @@ type RedisConfig struct {
 }
 
 type SMSConfig struct {
-	URL             string `toml:"URL"`
-	Account         string `toml:"Account"`
-	Model           string `toml:"Model"`
-	Secret          string `toml:"Secret"`
-	DurationMinutes int    `toml:"DurationMinutes"`
+	URL                     string `toml:"URL"`
+	Account                 string `toml:"Account"`
+	Model                   string `toml:"Model"`
+	Secret                  string `toml:"Secret"`
+	DurationMinutes         int    `toml:"DurationMinutes"`
+	AuthCodeDurationMinutes int    `toml:"AuthCodeDurationMinutes"`
 }
 
 type SignatureConfig struct {

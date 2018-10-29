@@ -3,7 +3,6 @@ package errorHandler
 import (
 	"fmt"
 	"github.com/labstack/echo"
-	"ifchange/tsketch/kit/config"
 	"net/http"
 	"strings"
 )
@@ -12,7 +11,7 @@ var codeMapping map[int]string
 
 func init() {
 	codeMapping = make(map[int]string)
-	for _, errConfig := range configError() {
+	for _, errConfig := range config() {
 		codeMapping[errConfig.code] = errConfig.msg
 	}
 }
@@ -55,7 +54,7 @@ func (ins *ErrCode) Errorf(err error, errCode int, msg ...string) error {
 		errMsg = fmt.Sprintf("undefind err msg code %d", errCode)
 	}
 
-	logMsg := err.Error()
+	logMsg := errMsg + " - " + err.Error()
 
 	if len(msg) > 0 {
 		logMsg += " - "
@@ -77,19 +76,12 @@ func ErrHandler(err error, c echo.Context) {
 	)
 
 	if errC, ok := err.(*errCommon); ok {
-		switch *config.GetEnvironment() {
-		case config.DEV, config.TEST:
-			msg.Code = errC.errCode
-			msg.Msg = errC.errMsg + errC.logMsg
-			logMsg = errC.logMsg
-		default:
-			msg.Code = errC.errCode
-			msg.Msg = errC.errMsg
-			logMsg = errC.logMsg
-		}
+		msg.Code = errC.errCode
+		msg.Msg = errC.errMsg
+		logMsg = errC.logMsg
 	} else {
 		msg.Code = -1
-		msg.Msg = "SYSTEM ERROR, please call backend ASAP"
+		msg.Msg = err.Error()
 		logMsg = err.Error()
 	}
 

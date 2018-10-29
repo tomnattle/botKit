@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"ifchange/tsketch/kit/config"
+	"github.com/ifchange/botKit/config"
 	"time"
 )
 

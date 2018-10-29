@@ -3,7 +3,7 @@ package logger
 import (
 	"bytes"
 	"fmt"
-	"ifchange/tsketch/kit/config"
+	"github.com/ifchange/botKit/config"
 	"io/ioutil"
 	"os"
 	"path/filepath"

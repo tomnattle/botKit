@@ -2,9 +2,9 @@ package Redis
 
 import (
 	"fmt"
+	"github.com/ifchange/botKit/config"
 	redisCluster "github.com/mediocregopher/radix.v2/cluster"
 	"github.com/mediocregopher/radix.v2/redis"
-	"ifchange/tsketch/kit/config"
 	"net"
 )
 

@@ -1,7 +1,7 @@
 package echoMiddleware
 
 import (
-	"ifchange/tsketch/kit/util"
+	"github.com/ifchange/botKit/util"
 	"testing"
 	"time"
 )

@@ -1,10 +1,12 @@
 package verifySMS
 
 import (
+	"encoding/json"
 	"fmt"
-	"ifchange/tsketch/kit/Redis"
-	"ifchange/tsketch/kit/SMS"
-	"ifchange/tsketch/kit/config"
+	"github.com/ifchange/botKit/Redis"
+	"github.com/ifchange/botKit/SMS"
+	"github.com/ifchange/botKit/config"
+	"github.com/ifchange/botKit/logger"
 	"math/rand"
 	"time"
 )
@@ -12,30 +14,17 @@ import (
 var (
 	contentModel string
 	// default 1 minute
-	time2live time.Duration = time.Duration(1) * time.Minute
+	sendDuration time.Duration = time.Duration(1) * time.Minute
+	// default 3 minute
+	authCodeLiveDuration time.Duration = time.Duration(3) * time.Minute
 )
 
 func init() {
 	contentModel = config.GetConfig().SMS.Model
-	time2live = time.Minute *
+	sendDuration = time.Minute *
 		time.Duration(config.GetConfig().SMS.DurationMinutes)
-}
-
-func VerifyAuthCode(phone, authCode string) (pass bool, err error) {
-	redis, err := Redis.GetRedis()
-	if err != nil {
-		return false, err
-	}
-	defer redis.Close()
-
-	saveAuthCode, ok := getAuthCode(redis, phone)
-	if !ok {
-		return false, nil
-	}
-	if saveAuthCode != authCode {
-		return false, nil
-	}
-	return true, nil
+	authCodeLiveDuration = time.Minute *
+		time.Duration(config.GetConfig().SMS.AuthCodeDurationMinutes)
 }
 
 func SendVerifySMS(phone string) error {
@@ -69,12 +58,39 @@ func SendVerifySMS(phone string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
+func VerifyAuthCode(phone, authCode string) (pass bool, err error) {
+	redis, err := Redis.GetRedis()
+	if err != nil {
+		return false, err
+	}
+	defer redis.Close()
+
+	allAuthCode, ok := getAuthCode(redis, phone)
+	if !ok {
+		return false, nil
+	}
+	now := time.Now()
+	for _, saveAuthCode := range allAuthCode {
+		if saveAuthCode.Expire.Sub(now) < 0 {
+			continue
+		}
+		if saveAuthCode.AuthCode != authCode {
+			continue
+		}
+		err := deleteAuthCode(redis, phone)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
 func checkSendDuration(redis *Redis.RedisCommon, phone string) error {
-	result, err := redis.Cmd("EXISTS", key(phone)).Int()
+	result, err := redis.Cmd("EXISTS", sendDurationKey(phone)).Int()
 	if err != nil {
 		return fmt.Errorf("kit-verifySMS checkSendDuration error %v", err)
 	}
@@ -84,28 +100,68 @@ func checkSendDuration(redis *Redis.RedisCommon, phone string) error {
 	return nil
 }
 
+type AuthCodeSaver struct {
+	AuthCode string    `json:"auth_code"`
+	Expire   time.Time `json:"expire"`
+}
+
+func getAuthCode(redis *Redis.RedisCommon, phone string) ([]*AuthCodeSaver, bool) {
+	all, err := redis.Cmd("GET", authCodeSaverKey(phone)).Bytes()
+	if err != nil {
+		return nil, false
+	}
+	allAuthCode := []*AuthCodeSaver{}
+	if err := json.Unmarshal(all, &allAuthCode); err != nil {
+		logger.Printf("getAuthCode Unmarshal json error %v", err)
+		return nil, false
+	}
+	return allAuthCode, true
+}
+
 func saveAuthCode(redis *Redis.RedisCommon, phone, authCode string) error {
-	err := redis.Cmd("SETEX", key(phone), int(time2live.Seconds()), authCode).Err
+	newAuthCode := &AuthCodeSaver{
+		AuthCode: authCode,
+		Expire:   time.Now().Add(authCodeLiveDuration),
+	}
+	all, ok := getAuthCode(redis, phone)
+	if ok {
+		all = append(all, newAuthCode)
+	} else {
+		all = []*AuthCodeSaver{newAuthCode}
+	}
+	data, err := json.Marshal(&all)
+	if err != nil {
+		return fmt.Errorf("saveAuthCode Marshal json error %v", err)
+	}
+	err = redis.Cmd("SETEX", authCodeSaverKey(phone), int(authCodeLiveDuration.Seconds()), data).Err
+	if err != nil {
+		return fmt.Errorf("exec redis query error %v", err)
+	}
+	err = redis.Cmd("SETEX", sendDurationKey(phone), int(sendDuration.Seconds()), authCode).Err
 	if err != nil {
 		return fmt.Errorf("exec redis query error %v", err)
 	}
 	return nil
 }
 
-func getAuthCode(redis *Redis.RedisCommon, phone string) (string, bool) {
-	str, err := redis.Cmd("GET", key(phone)).Str()
+func deleteAuthCode(redis *Redis.RedisCommon, phone string) error {
+	err := redis.Cmd("DEL", authCodeSaverKey(phone)).Err
 	if err != nil {
-		return str, false
+		return fmt.Errorf("exec redis query error %v", err)
 	}
-	return str, true
+	return nil
 }
 
-func key(phone string) string {
-	return Redis.FormatKey(fmt.Sprintf("verifySMS_Phone_%s", phone))
+func sendDurationKey(phone string) string {
+	return Redis.FormatKey(fmt.Sprintf("verifySMS_sendDuration_Phone_%s", phone))
+}
+
+func authCodeSaverKey(phone string) string {
+	return Redis.FormatKey(fmt.Sprintf("verifySMS_authCodeSaver_Phone_%s", phone))
 }
 
 func makeContent(authCode string) string {
-	return fmt.Sprintf(contentModel, authCode, int(time2live.Minutes()))
+	return fmt.Sprintf(contentModel, authCode, int(sendDuration.Minutes()))
 }
 
 func authCodeGenerator() string {
