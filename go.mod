@@ -12,8 +12,9 @@ require (
 	github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/go-sql-driver/mysql v1.4.0
+	github.com/labstack/echo v0.0.0-20180911044237-1abaa3049251
+	github.com/labstack/gommon v0.2.7 // indirect
 	github.com/mediocregopher/radix.v2 v0.0.0-20180603022615-94360be26253
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.2.2 // indirect
 	google.golang.org/appengine v1.2.0 // indirect
 )
