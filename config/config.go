@@ -58,8 +58,9 @@ type SignatureConfig struct {
 
 func init() {
 	flag.StringVar(&configFile, "cfg",
-		"unset config file",
-		"configFile is required. \n -cfg ./config/*/config.toml \n dev test prod")
+		"./config/dev/config.toml",
+		"configFile is required.\n-cfg ./config/*/config.toml\ndev test prod\n")
+	flag.Parse()
 	initConfig()
 	initEnvironment()
 }
