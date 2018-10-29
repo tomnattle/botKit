@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ifchange/botKit/config"
 )
 
 func main() {
-	config.GetConfig()
+	fmt.Println(config.GetConfig())
 }

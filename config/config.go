@@ -4,24 +4,25 @@ import (
 	"flag"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
-const (
-	AppName string = "winMode"
+var (
+	environment *Environment
+	config      *Config
+	configFile  string
 )
 
 type Config struct {
-	AppID     int              `toml:"AppID"`
-	SubAppID  int              `toml:"SubAppID"`
-	Addr      string           `toml:"Addr"`
-	Logger    *LoggerConfig    `toml:"Log"`
-	MySQL     *MySQLConfig     `toml:"MySQL"`
-	Redis     *RedisConfig     `toml:"Redis"`
-	SMS       *SMSConfig       `toml:"SMS"`
-	Signature *SignatureConfig `toml:"Signature"`
+	AppID       int              `toml:"AppID"`
+	SubAppID    int              `toml:"SubAppID"`
+	AppName     string           `toml:"AppName"`
+	Environment string           `toml:"Environment"`
+	Addr        string           `toml:"Addr"`
+	Logger      *LoggerConfig    `toml:"Log"`
+	MySQL       *MySQLConfig     `toml:"MySQL"`
+	Redis       *RedisConfig     `toml:"Redis"`
+	SMS         *SMSConfig       `toml:"SMS"`
+	Signature   *SignatureConfig `toml:"Signature"`
 }
 
 type LoggerConfig struct {
@@ -56,8 +57,11 @@ type SignatureConfig struct {
 }
 
 func init() {
+	flag.StringVar(&configFile, "cfg",
+		"unset config file",
+		"configFile is required. \n -cfg ./config/*/config.toml \n dev test prod")
+	initConfig()
 	initEnvironment()
-	initConfig(environment.configFile())
 }
 
 type Environment uint8
@@ -81,38 +85,6 @@ func (e *Environment) String() string {
 	return "runtime find environment error !!!"
 }
 
-func (e *Environment) configFile() (configFile string) {
-	if e == nil {
-		panic("un find environment, start fail")
-	}
-	runAbs, err := filepath.Abs(".")
-	if err != nil {
-		panic("try to find run abs path error")
-	}
-	pathS := strings.Split(runAbs, AppName)
-	rootParentPath := pathS[0]
-	env := ""
-	switch *e {
-	case DEV:
-		env = "dev"
-	case TEST:
-		env = "test"
-	case PROD:
-		env = "prod"
-	}
-	configFile = filepath.Join(rootParentPath, AppName,
-		"config", env, "config.toml")
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		panic(fmt.Sprintf("config file not exist in %s", configFile))
-	}
-	return
-}
-
-var (
-	environment *Environment
-	config      *Config
-)
-
 func GetConfig() *Config {
 	if config == nil {
 		panic("nil config error")
@@ -125,32 +97,23 @@ func GetEnvironment() *Environment {
 }
 
 func initEnvironment() {
-	parser :=
-		func(e string) {
-			switch e {
-			case "dev":
-				formatE := DEV
-				environment = &formatE
-			case "test":
-				formatE := TEST
-				environment = &formatE
-			case "prod":
-				formatE := PROD
-				environment = &formatE
-			}
-		}
-
-	if environment == nil {
-		parser(os.Getenv("ENVIRONMENT"))
+	switch config.Environment {
+	case "dev":
+		formatE := DEV
+		environment = &formatE
+	case "test":
+		formatE := TEST
+		environment = &formatE
+	case "prod":
+		formatE := PROD
+		environment = &formatE
 	}
-
 	if environment == nil {
-		parser(*(flag.String("e", "dev",
-			"set env, e.g dev test prod")))
+		panic(fmt.Errorf("init config error, try find environment error"))
 	}
 }
 
-func initConfig(configFile string) {
+func initConfig() {
 	config = &Config{}
 	_, err := toml.DecodeFile(configFile, config)
 	if err != nil {
