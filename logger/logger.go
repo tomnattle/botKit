@@ -44,9 +44,12 @@ type Logger struct {
 }
 
 func (ins *Logger) Write(data []byte) (int, error) {
+	dataLen := len(data)
+	cp := make([]byte, dataLen)
+	copy(cp, data)
 	select {
-	case ins.buffer <- data:
-		return len(data), nil
+	case ins.buffer <- cp:
+		return dataLen, nil
 	default:
 		return 0, fmt.Errorf("try add data into logger buffer error, buffer is full")
 	}
