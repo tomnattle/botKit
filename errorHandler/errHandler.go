@@ -2,6 +2,7 @@ package errorHandler
 
 import (
 	"fmt"
+	"github.com/ifchange/botKit/config"
 	"github.com/labstack/echo"
 	"net/http"
 	"strings"
@@ -11,8 +12,9 @@ var codeMapping map[int]string
 
 func init() {
 	codeMapping = make(map[int]string)
-	for _, errConfig := range config() {
-		codeMapping[errConfig.code] = errConfig.msg
+	for _, errConfig := range errCodeConfig() {
+		code := config.GetConfig().AppID*1000000 + config.GetConfig().SubAppID*10000 + errConfig.code
+		codeMapping[code] = errConfig.msg
 	}
 }
 
