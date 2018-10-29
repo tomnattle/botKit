@@ -118,7 +118,7 @@ func (ins *Logger) checkFile() {
 		ins.generateFileName()
 	}
 
-	if ins.file == nil {
+	if ins.file == nil || ins.file.Sync() != nil {
 		file, err := os.OpenFile(ins.fileName, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
 		if err != nil {
 			fmt.Printf("logger broken, can't open log file %s %v", ins.fileName, err)
