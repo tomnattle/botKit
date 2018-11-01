@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -25,22 +26,27 @@ func init() {
 		panic("logger config is nil")
 	}
 
+	now := time.Now()
+
 	writer = &Logger{
 		sourceFileName: cfg.LogFile,
 		buffer:         make(chan []byte, 1000),
-		timestamp:      time.Now(),
+		mu:             new(sync.RWMutex),
 	}
-	writer.generateFileName()
-	go writer.dumpStart()
+	writer.fileCheck(now)
+	go writer.loopFileCheck()
+	go writer.loopLogDump()
 }
 
 type Logger struct {
-	file     *os.File
-	fileName string
-
 	sourceFileName string
 	buffer         chan []byte
-	timestamp      time.Time
+	fileName       string
+
+	timestamp time.Time
+	file      *os.File
+
+	mu *sync.RWMutex
 }
 
 func (ins *Logger) Write(data []byte) (int, error) {
@@ -55,53 +61,59 @@ func (ins *Logger) Write(data []byte) (int, error) {
 	}
 }
 
-func (ins *Logger) dumpStart() {
-	ticker := time.Tick(time.Duration(1) * time.Second)
+func (ins *Logger) loopFileCheck() {
+	for now := range time.Tick(time.Duration(1) * time.Minute) {
+		ins.mu.Lock()
 
-	fileCheckTickerTimes, logFileCleanTickerTimes := 0, 0
+		ins.fileCheck(now)
+		ins.file.Sync()
+		ins.cleanLogFile(now)
 
-	fileCheckDuration := time.Duration(1) * time.Minute
-	logFileCleanDuration := time.Duration(24) * time.Hour
-
-	ins.checkFile()
-
-	defer func() {
-		// using a closure
-		// keep ins pointer
-		ins.file.Close()
-	}()
-
-	for {
-		<-ticker
-
-		fileCheckTickerTimes++
-		if fileCheckTickerTimes > int(fileCheckDuration.Seconds()) {
-			ins.checkFile()
-			fileCheckTickerTimes = 0
-		}
-
-		logFileCleanTickerTimes++
-		if logFileCleanTickerTimes > int(logFileCleanDuration.Seconds()) {
-			ins.cleanLogFile()
-			logFileCleanTickerTimes = 0
-		}
-
-		ins.dumpAll()
+		ins.mu.Unlock()
 	}
 }
 
-func (ins *Logger) cleanLogFile() {
-	filePath, fileName := filepath.Split(ins.fileName)
-	rd, err := ioutil.ReadDir(filePath)
+func (ins *Logger) fileCheck(now time.Time) {
+	if now.Format("20060102") != ins.timestamp.Format("20060102") {
+		ins.timestamp = now
+		ins.fileName = ins.sourceFileName + ins.timestamp.Format("_2006_01_02")
+	}
+
+	if ins.file == nil || ins.file.Sync() != nil {
+		ins.newLogFile()
+	}
+
+	if ins.file.Name() == ins.fileName {
+		return
+	}
+	ins.file.Close()
+	ins.newLogFile()
+}
+
+func (ins *Logger) newLogFile() {
+	file, err := os.OpenFile(ins.fileName, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Printf("cleanLogFile error %v %v", filePath, err)
+		fmt.Printf("logger broken, can't open log file %s %v\n", ins.fileName, err)
+		return
+	}
+	err = file.Sync()
+	if err != nil {
+		fmt.Printf("logger sync error %v\n", err)
+		return
+	}
+	ins.file = file
+}
+
+func (ins *Logger) cleanLogFile(now time.Time) {
+	filePath, fileName := filepath.Split(ins.fileName)
+	dir, err := ioutil.ReadDir(filePath)
+	if err != nil {
+		fmt.Printf("cleanLogFile error %v %v\n", filePath, err)
 		return
 	}
 
-	now := time.Now()
-
-	for _, fi := range rd {
-		subNames := strings.SplitAfter(fi.Name(), fileName)
+	for _, file := range dir {
+		subNames := strings.SplitAfter(file.Name(), fileName)
 		if len(subNames) != 2 {
 			continue
 		}
@@ -110,62 +122,18 @@ func (ins *Logger) cleanLogFile() {
 			continue
 		}
 		if now.Sub(createDay) > 7*time.Duration(24)*time.Hour {
-			os.Remove(filePath + fi.Name())
+			os.Remove(filePath + file.Name())
 		}
 	}
 }
 
-func (ins *Logger) checkFile() {
-	if time.Now().Format("20060102") != ins.timestamp.Format("20060102") {
-		ins.timestamp = time.Now()
-		ins.generateFileName()
-	}
-
-	if ins.file == nil || ins.file.Sync() != nil {
-		file, err := os.OpenFile(ins.fileName, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
-		if err != nil {
-			fmt.Printf("logger broken, can't open log file %s %v", ins.fileName, err)
-			return
-		}
-		err = file.Sync()
-		if err != nil {
-			fmt.Printf("logger sync error %v", err)
-			return
-		}
-		ins.file = file
-	}
-
-	if ins.file.Name() == ins.fileName {
-		return
-	}
-	ins.file.Close()
-
-	file, err := os.OpenFile(ins.fileName, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		fmt.Printf("logger broken, can't open log file %s %v", ins.fileName, err)
-		return
-	}
-	err = file.Sync()
-	if err != nil {
-		fmt.Printf("logger sync error %v", err)
-		return
-	}
-	ins.file = file
-}
-
-func (ins *Logger) generateFileName() {
-	ins.fileName = ins.sourceFileName + ins.timestamp.Format("_2006_01_02")
-}
-
-func (ins *Logger) dumpAll() {
+func (ins *Logger) loopLogDump() {
 	for data := range ins.buffer {
+		ins.mu.RLock()
 		_, err := ins.file.Write(data)
 		if err != nil {
-			fmt.Printf("logger try write file error %s %v", string(data), err)
+			fmt.Printf("logger try write file error %s %v\n", string(data), err)
 		}
-	}
-	err := ins.file.Sync()
-	if err != nil {
-		fmt.Printf("logger sync error %v", err)
+		ins.mu.RUnlock()
 	}
 }
