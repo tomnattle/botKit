@@ -158,20 +158,14 @@ func (ins *Logger) generateFileName() {
 }
 
 func (ins *Logger) dumpAll() {
-allClear:
-	for {
-		select {
-		case data := <-ins.buffer:
-			_, err := ins.file.Write(data)
-			if err != nil {
-				fmt.Printf("logger try write file error %s %v", string(data), err)
-			}
-		default:
-			err := ins.file.Sync()
-			if err != nil {
-				fmt.Printf("logger sync error %v", err)
-			}
-			break allClear
+	for data := range ins.buffer {
+		_, err := ins.file.Write(data)
+		if err != nil {
+			fmt.Printf("logger try write file error %s %v", string(data), err)
 		}
+	}
+	err := ins.file.Sync()
+	if err != nil {
+		fmt.Printf("logger sync error %v", err)
 	}
 }
