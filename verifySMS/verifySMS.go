@@ -150,8 +150,10 @@ func saveAuthCode(redis *Redis.RedisCommon, phone, authCode string) error {
 }
 
 func deleteAuthCode(redis *Redis.RedisCommon, phone string) error {
-	err := redis.Cmd("DEL", authCodeSaverKey(phone)).Err
-	if err != nil {
+	if err := redis.Cmd("DEL", authCodeSaverKey(phone)).Err; err != nil {
+		return fmt.Errorf("exec redis query error %v", err)
+	}
+	if err := redis.Cmd("DEL", sendDurationKey(phone)).Err; err != nil {
 		return fmt.Errorf("exec redis query error %v", err)
 	}
 	return nil
