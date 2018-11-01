@@ -2,6 +2,7 @@ package verifySMS
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ifchange/botKit/Redis"
 	"github.com/ifchange/botKit/SMS"
@@ -17,6 +18,10 @@ var (
 	sendDuration time.Duration = time.Duration(1) * time.Minute
 	// default 3 minute
 	authCodeLiveDuration time.Duration = time.Duration(3) * time.Minute
+)
+
+var (
+	ErrAuthCodeIsExist = errors.New("authCode is exist")
 )
 
 func init() {
@@ -95,7 +100,7 @@ func checkSendDuration(redis *Redis.RedisCommon, phone string) error {
 		return fmt.Errorf("kit-verifySMS checkSendDuration error %v", err)
 	}
 	if result > 0 {
-		return fmt.Errorf("kit-verifySMS authCode is exist")
+		return ErrAuthCodeIsExist
 	}
 	return nil
 }
