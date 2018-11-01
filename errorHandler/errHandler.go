@@ -96,7 +96,7 @@ func ErrHandler(err error, c echo.Context) {
 		logMsg = err.Error()
 	}
 
-	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, msg, logMsg)
+	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, msg.Code, logMsg)
 
 	// Send response
 	if !c.Response().Committed {
