@@ -6,6 +6,7 @@ import (
 	"github.com/ifchange/botKit/logger"
 	"github.com/labstack/echo"
 	"net/http"
+	"runtime/debug"
 	"strings"
 )
 
@@ -96,7 +97,8 @@ func ErrHandler(err error, c echo.Context) {
 		logMsg = err.Error()
 	}
 
-	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, msg.Code, logMsg)
+	c.Logger().Warnf("uri:%s err:%v info:%v stack:%s", c.Request().RequestURI, msg.Code, logMsg,
+		func() string { return string(debug.Stack()) }())
 
 	// Send response
 	if !c.Response().Committed {
