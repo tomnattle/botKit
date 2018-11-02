@@ -39,17 +39,16 @@ func signatureWithConfig(config config.SignatureConfig) echo.MiddlewareFunc {
 			signature := c.Request().Header.Get("signature")
 			nonce := c.Request().Header.Get("nonce")
 			if signature == "" {
-				return rsp.Errorf(fmt.Errorf("signature can not be null"), 20034001)
+				return rsp.Errorf(fmt.Errorf("signature can not be null"), 4001)
 			}
 			signatureStr, err := creatSignature(timeStamp, nonce, cfg.SecretKey)
 			if err != nil {
-				return rsp.Errorf(fmt.Errorf("signature create err %v", err), 20034001)
+				return rsp.Errorf(fmt.Errorf("signature create err %v", err), 4001)
 			}
 			if signatureStr == signature {
 				return next(c)
 			}
-			return rsp.Errorf(fmt.Errorf("signature wrong"), 20034001)
-
+			return rsp.Errorf(fmt.Errorf("signature wrong"), 4001)
 		}
 	}
 }

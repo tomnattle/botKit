@@ -3,22 +3,30 @@ package errorHandler
 import (
 	"fmt"
 	"github.com/ifchange/botKit/config"
-	"github.com/ifchange/botKit/logger"
 	"github.com/labstack/echo"
 	"net/http"
-	"runtime/debug"
 	"strings"
 )
 
-var codeMapping map[int]string
+var (
+	fullCodeMapping  map[int]string
+	shortCodeMapping map[int]string
+	fullCodeBasic    int
+)
+
+func shortCodeToFullCode(shortCode int) (fullCode int) {
+	fullCode = fullCodeBasic + shortCode
+	return
+}
 
 func init() {
-	codeMapping = make(map[int]string)
+	fullCodeBasic = config.GetConfig().AppID*1000000 + config.GetConfig().SubAppID*10000
+	fullCodeMapping = make(map[int]string)
+	shortCodeMapping = make(map[int]string)
 	for _, errConfig := range errCodeConfig() {
-		code := config.GetConfig().AppID*1000000 + config.GetConfig().SubAppID*10000 + errConfig.code
-		codeMapping[code] = errConfig.msg
+		fullCodeMapping[shortCodeToFullCode(errConfig.code)] = errConfig.msg
+		shortCodeMapping[errConfig.code] = errConfig.msg
 	}
-	logger.Printf("all errCode config %v\n", codeMapping)
 }
 
 type errConfig struct {
@@ -54,9 +62,14 @@ func (ins *ErrCode) Errorf(err error, errCode int, msg ...string) error {
 		return nil
 	}
 
-	errMsg, ok := codeMapping[errCode]
+	errMsg, ok := fullCodeMapping[errCode]
 	if !ok {
-		errMsg = fmt.Sprintf("undefind err msg code %d", errCode)
+		errMsg, ok = shortCodeMapping[errCode]
+		if errMsg, ok = shortCodeMapping[errCode]; ok {
+			errCode = shortCodeToFullCode(errCode)
+		} else {
+			errMsg = fmt.Sprintf("undefind err msg code %d", errCode)
+		}
 	}
 
 	logMsg := errMsg + " - " + err.Error()
@@ -65,8 +78,6 @@ func (ins *ErrCode) Errorf(err error, errCode int, msg ...string) error {
 		logMsg += " - "
 		logMsg += strings.Join(msg, " ")
 	}
-
-	logMsg += fmt.Sprintf("stack: %s", debug.Stack())
 
 	return &errCommon{
 		errCode: errCode,
