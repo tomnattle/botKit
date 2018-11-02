@@ -66,6 +66,8 @@ func (ins *ErrCode) Errorf(err error, errCode int, msg ...string) error {
 		logMsg += strings.Join(msg, " ")
 	}
 
+	logMsg += fmt.Sprintf("stack: %s", debug.Stack())
+
 	return &errCommon{
 		errCode: errCode,
 		errMsg:  errMsg,
@@ -97,8 +99,7 @@ func ErrHandler(err error, c echo.Context) {
 		logMsg = err.Error()
 	}
 
-	c.Logger().Warnf("uri:%s err:%v info:%v stack:%s", c.Request().RequestURI, msg.Code, logMsg,
-		func() string { return string(debug.Stack()) }())
+	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, msg.Code, logMsg)
 
 	// Send response
 	if !c.Response().Committed {
