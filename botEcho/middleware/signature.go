@@ -1,4 +1,4 @@
-package echoMiddleware
+package botMiddleware
 
 import (
 	"crypto/sha1"
@@ -20,7 +20,6 @@ func init() {
 	if cfg == nil {
 		panic("signature config error")
 	}
-
 }
 
 func Signature() echo.MiddlewareFunc {
@@ -54,7 +53,7 @@ func creatSignature(timeStamp string, nonce string, sourcekey string) (string, e
 	if timeStamp == "" || nonce == "" {
 		return "", errors.New("timeStamp or nonce can not be null")
 	}
-	//时间戳 有效期限制 6个小时
+	// 时间戳 有效期限制 6个小时
 	const longForm = "2006010215"
 	serverTimeStamp := time.Now().Format("2006010215")
 	serverTime, err := time.Parse(longForm, serverTimeStamp)
