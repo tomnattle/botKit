@@ -3,8 +3,8 @@ package botEcho
 import (
 	"fmt"
 	"github.com/ifchange/botKit/botEcho/grace"
+	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
-	"github.com/ifchange/botKit/errorHandler"
 	"github.com/ifchange/botKit/logger"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -19,7 +19,7 @@ func New() *Server {
 	appName := config.GetConfig().AppName
 	// load config
 	fmt.Printf("%s start, run environment is %s\n",
-		appName, config.GetEnvironment().String())
+		appName, config.GetConfig().Environment)
 	cfg := config.GetConfig()
 	if cfg == nil {
 		panic(fmt.Sprintf("%s start fail, load config error", appName))
@@ -32,7 +32,7 @@ func New() *Server {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Output: logger.GetOutput(),
 	}))
-	if config.GetEnvironment().String() == "dev" {
+	if config.GetConfig().Environment == "dev" {
 		e.Logger.SetLevel(log.DEBUG)
 	} else {
 		e.Logger.SetLevel(log.WARN)
@@ -43,7 +43,7 @@ func New() *Server {
 	e.Use(middleware.Recover())
 	e.Use(middleware.BodyLimit("2M"))
 	// common error handler
-	e.HTTPErrorHandler = errorHandler.ErrHandler
+	e.HTTPErrorHandler = commonHTTP.ErrHandler
 
 	e.Server.Addr = cfg.Addr
 	return e
