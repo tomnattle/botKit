@@ -57,7 +57,7 @@ func newCurl(request SMSRequest) *CurlCommon {
 	return &CurlCommon{
 		Header: CurlCommonHeader{
 			AppID:     config.GetConfig().AppID,
-			LogID:     config.GetEnvironment().String(),
+			LogID:     config.GetConfig().Environment,
 			TimeStamp: timeStamp,
 			Nonce:     nonce,
 			Signature: signature,

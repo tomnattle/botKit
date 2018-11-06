@@ -1,4 +1,4 @@
-package errorHandler
+package commonHTTP
 
 func errCodeConfig() []*errConfig {
 	return []*errConfig{

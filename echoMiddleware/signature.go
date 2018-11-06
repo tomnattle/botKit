@@ -4,8 +4,8 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
+	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
-	"github.com/ifchange/botKit/errorHandler"
 	"github.com/labstack/echo"
 	"io"
 	"sort"
@@ -23,10 +23,6 @@ func init() {
 
 }
 
-type SignatureResponse struct {
-	errorHandler.ErrCode
-}
-
 func Signature() echo.MiddlewareFunc {
 	return signatureWithConfig(*cfg)
 }
@@ -34,7 +30,7 @@ func Signature() echo.MiddlewareFunc {
 func signatureWithConfig(config config.SignatureConfig) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			rsp := &SignatureResponse{}
+			rsp := commonHTTP.MakeRsp(nil)
 			timeStamp := c.Request().Header.Get("timeStamp")
 			signature := c.Request().Header.Get("signature")
 			nonce := c.Request().Header.Get("nonce")

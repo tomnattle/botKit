@@ -1,11 +1,9 @@
-package errorHandler
+package commonHTTP
 
 import (
-	"fmt"
 	"github.com/ifchange/botKit/config"
 	"github.com/labstack/echo"
 	"net/http"
-	"strings"
 )
 
 var (
@@ -34,16 +32,6 @@ type errConfig struct {
 	msg  string
 }
 
-type ErrCode struct {
-	Code int    `json:"err_no"`
-	Msg  string `json:"err_msg"`
-}
-
-func (err *ErrCode) String() string {
-	return fmt.Sprintf("errNo:%v errMsg:%v",
-		err.Code, err.Msg)
-}
-
 type errCommon struct {
 	errCode int
 	errMsg  string
@@ -57,67 +45,38 @@ func (err *errCommon) Error() string {
 	return err.errMsg
 }
 
-func (ins *ErrCode) Errorf(err error, errCode int, msg ...string) error {
-	if err == nil {
-		return nil
-	}
-
-	errMsg, ok := fullCodeMapping[errCode]
-	if !ok {
-		errMsg, ok = shortCodeMapping[errCode]
-		if errMsg, ok = shortCodeMapping[errCode]; ok {
-			errCode = shortCodeToFullCode(errCode)
-		} else {
-			errMsg = fmt.Sprintf("undefind err msg code %d", errCode)
-		}
-	}
-
-	logMsg := errMsg + " - " + err.Error()
-
-	if len(msg) > 0 {
-		logMsg += " - "
-		logMsg += strings.Join(msg, " ")
-	}
-
-	return &errCommon{
-		errCode: errCode,
-		errMsg:  errMsg,
-		logMsg:  logMsg,
-	}
-}
-
 func ErrHandler(err error, c echo.Context) {
 	var (
 		code   = http.StatusOK
-		msg    = &ErrCode{}
+		rsp    = MakeRsp(nil)
 		logMsg = ""
 	)
 
 	if errC, ok := err.(*errCommon); ok {
-		switch config.GetEnvironment() {
-		case config.DEV, config.TEST:
-			msg.Code = errC.errCode
-			msg.Msg = errC.errMsg + errC.logMsg
+		switch config.GetConfig().Environment {
+		case "dev", "test":
+			rsp.R.ErrNo = errC.errCode
+			rsp.R.ErrMsg = errC.errMsg + errC.logMsg
 			logMsg = errC.logMsg
 		default:
-			msg.Code = errC.errCode
-			msg.Msg = errC.errMsg
+			rsp.R.ErrNo = errC.errCode
+			rsp.R.ErrMsg = errC.errMsg
 			logMsg = errC.logMsg
 		}
 	} else {
-		msg.Code = -1
-		msg.Msg = "SYSTEM ERROR, please call backend ASAP"
+		rsp.R.ErrNo = -1
+		rsp.R.ErrMsg = "SYSTEM ERROR, please call backend ASAP"
 		logMsg = err.Error()
 	}
 
-	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, msg.Code, logMsg)
+	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, rsp.R.ErrNo, logMsg)
 
 	// Send response
 	if !c.Response().Committed {
 		if c.Request().Method == echo.HEAD { // echo Issue #608
 			err = c.NoContent(code)
 		} else {
-			err = c.JSON(code, msg)
+			err = c.JSON(code, rsp)
 		}
 		if err != nil {
 			c.Logger().Error(err)
