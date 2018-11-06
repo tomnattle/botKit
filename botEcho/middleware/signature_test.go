@@ -1,4 +1,4 @@
-package echoMiddleware
+package botMiddleware
 
 import (
 	"github.com/ifchange/botKit/util"
