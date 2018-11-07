@@ -30,7 +30,3 @@ func GetURI(productID int) (uri string, err error) {
 	}
 	return
 }
-
-func GetAdmin() string {
-	return cfg.Admin
-}
