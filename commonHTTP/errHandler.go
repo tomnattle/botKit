@@ -1,9 +1,11 @@
 package commonHTTP
 
 import (
+	"fmt"
 	"github.com/ifchange/botKit/config"
 	"github.com/labstack/echo"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -24,6 +26,35 @@ func init() {
 	for _, errConfig := range errCodeConfig() {
 		fullCodeMapping[shortCodeToFullCode(errConfig.code)] = errConfig.msg
 		shortCodeMapping[errConfig.code] = errConfig.msg
+	}
+}
+
+func (ins *Response) Errorf(err error, errCode int, msg ...string) error {
+	if err == nil {
+		return nil
+	}
+
+	errMsg, ok := fullCodeMapping[errCode]
+	if !ok {
+		errMsg, ok = shortCodeMapping[errCode]
+		if errMsg, ok = shortCodeMapping[errCode]; ok {
+			errCode = shortCodeToFullCode(errCode)
+		} else {
+			errMsg = fmt.Sprintf("undefind err msg code %d", errCode)
+		}
+	}
+
+	logMsg := errMsg + " - " + err.Error()
+
+	if len(msg) > 0 {
+		logMsg += " - "
+		logMsg += strings.Join(msg, " ")
+	}
+
+	return &errCommon{
+		errCode: errCode,
+		errMsg:  errMsg,
+		logMsg:  logMsg,
 	}
 }
 

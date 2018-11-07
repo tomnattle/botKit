@@ -1,8 +1,10 @@
 package commonHTTP
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
+	"io"
+	"io/ioutil"
 )
 
 type Response struct {
@@ -14,38 +16,23 @@ type Response struct {
 	} `json:"response"`
 }
 
+func GetRsp(reader io.Reader, usefulResponsePointer interface{}) error {
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return fmt.Errorf("read from io.Reader error %v", err)
+	}
+	ins := &Response{}
+	ins.R.Results = usefulResponsePointer
+	err = json.Unmarshal(data, ins)
+	if err != nil {
+		return fmt.Errorf("json unmarshal error %v %v", err, usefulResponsePointer)
+	}
+	return nil
+}
+
 func MakeRsp(usefulResponsePointer interface{}) *Response {
 	ins := &Response{}
 	ins.H = commonHeader
 	ins.R.Results = usefulResponsePointer
 	return ins
-}
-
-func (ins *Response) Errorf(err error, errCode int, msg ...string) error {
-	if err == nil {
-		return nil
-	}
-
-	errMsg, ok := fullCodeMapping[errCode]
-	if !ok {
-		errMsg, ok = shortCodeMapping[errCode]
-		if errMsg, ok = shortCodeMapping[errCode]; ok {
-			errCode = shortCodeToFullCode(errCode)
-		} else {
-			errMsg = fmt.Sprintf("undefind err msg code %d", errCode)
-		}
-	}
-
-	logMsg := errMsg + " - " + err.Error()
-
-	if len(msg) > 0 {
-		logMsg += " - "
-		logMsg += strings.Join(msg, " ")
-	}
-
-	return &errCommon{
-		errCode: errCode,
-		errMsg:  errMsg,
-		logMsg:  logMsg,
-	}
 }

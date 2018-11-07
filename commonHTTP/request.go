@@ -8,7 +8,7 @@ import (
 )
 
 type Request struct {
-	H Header `json:"header"`
+	H *Header `json:"header"`
 	R struct {
 		W string      `json:"w"`
 		C string      `json:"c"`
@@ -29,4 +29,11 @@ func GetReq(reader io.Reader, usefulRequestPointer interface{}) error {
 		return fmt.Errorf("json unmarshal error %v %v", err, usefulRequestPointer)
 	}
 	return nil
+}
+
+func MakeReq(usefulRequestPointer interface{}) *Request {
+	ins := &Request{}
+	ins.H = commonHeader
+	ins.R.P = usefulRequestPointer
+	return ins
 }
