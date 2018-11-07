@@ -17,16 +17,16 @@ type Request struct {
 	} `json:"request"`
 }
 
-func GetReq(reader io.Reader, emptyUsefulRequestPointer interface{}) (usefulRequestPointer interface{}, err error) {
+func GetReq(reader io.Reader, usefulRequestPointer interface{}) error {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, fmt.Errorf("read from io.Reader error %v", err)
+		return fmt.Errorf("read from io.Reader error %v", err)
 	}
 	ins := &Request{}
-	ins.R.P = emptyUsefulRequestPointer
+	ins.R.P = usefulRequestPointer
 	err = json.Unmarshal(data, ins)
 	if err != nil {
-		return nil, fmt.Errorf("json unmarshal error %v %v", err, emptyUsefulRequestPointer)
+		return fmt.Errorf("json unmarshal error %v %v", err, usefulRequestPointer)
 	}
-	return ins.R.P, nil
+	return nil
 }
