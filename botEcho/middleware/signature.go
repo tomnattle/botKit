@@ -1,4 +1,4 @@
-package botMiddleware
+package middleware
 
 import (
 	"crypto/sha1"
