@@ -30,3 +30,8 @@ func GetURI(productID int) (uri string, err error) {
 	}
 	return
 }
+
+type Product struct {
+	ID   int    `json:"product_id"`
+	Name string `json:"product_name"`
+}
