@@ -2,7 +2,6 @@ package signature
 
 import (
 	"bytes"
-	"github.com/ifchange/botKit/botEcho/middleware"
 	"net/http"
 	"testing"
 )
@@ -19,7 +18,7 @@ func TestAddSignature(t *testing.T) {
 	timeStamp := req.Header.Get("timeStamp")
 	signature := req.Header.Get("signature")
 	nonce := req.Header.Get("nonce")
-	signatureStr, err := middleware.CreatSignature(timeStamp, nonce, cfg.SecretKey)
+	signatureStr, err := Signature(timeStamp, nonce, cfg.SecretKey)
 	if err != nil {
 		t.Fatal(err)
 	}
