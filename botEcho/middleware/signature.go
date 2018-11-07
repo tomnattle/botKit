@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
+	"github.com/ifchange/botKit/util"
 	"github.com/labstack/echo"
 	"io"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -46,6 +48,22 @@ func signatureWithConfig(config config.SignatureConfig) echo.MiddlewareFunc {
 			return rsp.Errorf(fmt.Errorf("signature wrong"), 4005)
 		}
 	}
+}
+
+func AddSignature(req *http.Request) error {
+	if req == nil {
+		return fmt.Errorf("botKit signature nil http-request")
+	}
+	timeStamp := time.Now().Format("2006010215")
+	req.Header.Add("timeStamp", timeStamp)
+	nonce := util.RandStr(15)
+	req.Header.Add("nonce", nonce)
+	signature, err := creatSignature(timeStamp, nonce, cfg.SecretKey)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("signature", signature)
+	return nil
 }
 
 func creatSignature(timeStamp string, nonce string, sourcekey string) (string, error) {

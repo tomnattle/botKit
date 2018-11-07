@@ -22,6 +22,7 @@ type Config struct {
 	Redis       *RedisConfig     `toml:"Redis"`
 	SMS         *SMSConfig       `toml:"SMS"`
 	Signature   *SignatureConfig `toml:"Signature"`
+	URI         *URIConfig       `toml:"URI"`
 }
 
 type LoggerConfig struct {
@@ -53,6 +54,13 @@ type SMSConfig struct {
 
 type SignatureConfig struct {
 	SecretKey string `toml:"SecretKey"`
+}
+
+type URIConfig struct {
+	ChatBot string `toml:"ChatBot"`
+	WinMode string `toml:"WinMode"`
+	Tsketch string `toml:"Tsketch"`
+	Admin   string `toml:"Admin"`
 }
 
 func init() {
