@@ -56,7 +56,6 @@ func Signature(timeStamp string, nonce string, sourcekey string) (string, error)
 	}
 	if (timeStr.Sub(serverTime) > 6*time.Hour) || (serverTime.Sub(timeStr) > 6*time.Hour) {
 		return "", errors.New("time is expires")
-
 	}
 
 	sort.Slice(signatureSource, func(i, j int) bool { return signatureSource[i] < signatureSource[j] })
@@ -64,4 +63,24 @@ func Signature(timeStamp string, nonce string, sourcekey string) (string, error)
 	io.WriteString(sha1er, strings.Join(signatureSource, ""))
 	signatureStr := fmt.Sprintf("%x", sha1er.Sum(nil))
 	return signatureStr, nil
+}
+
+func VerifySignature(req *http.Request) (pass bool, err error) {
+	timeStamp := req.Header.Get("timeStamp")
+	signatureStr := req.Header.Get("signature")
+	nonce := req.Header.Get("nonce")
+	if signatureStr == "" {
+		err = fmt.Errorf("signature can not be null")
+		return
+	}
+	selfSignatureStr, err := Signature(timeStamp, nonce, cfg.SecretKey)
+	if err != nil {
+		err = fmt.Errorf("signature create err %v", err)
+		return
+	}
+	if selfSignatureStr == signatureStr {
+		pass = true
+		return
+	}
+	return
 }

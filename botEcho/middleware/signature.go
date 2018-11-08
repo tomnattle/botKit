@@ -25,17 +25,11 @@ func signatureWithConfig(config config.SignatureConfig) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			rsp := commonHTTP.MakeRsp(nil)
-			timeStamp := c.Request().Header.Get("timeStamp")
-			signatureStr := c.Request().Header.Get("signature")
-			nonce := c.Request().Header.Get("nonce")
-			if signatureStr == "" {
-				return rsp.Errorf(fmt.Errorf("signature can not be null"), 4005)
-			}
-			selfSignatureStr, err := signature.Signature(timeStamp, nonce, cfg.SecretKey)
+			pass, err := signature.VerifySignature(c.Request())
 			if err != nil {
-				return rsp.Errorf(fmt.Errorf("signature create err %v", err), 4005)
+				return rsp.Errorf(fmt.Errorf("verify signature err %v", err), 4001)
 			}
-			if selfSignatureStr == signatureStr {
+			if pass {
 				return next(c)
 			}
 			return rsp.Errorf(fmt.Errorf("signature wrong"), 4005)

@@ -15,14 +15,11 @@ func TestAddSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	timeStamp := req.Header.Get("timeStamp")
-	signature := req.Header.Get("signature")
-	nonce := req.Header.Get("nonce")
-	signatureStr, err := Signature(timeStamp, nonce, cfg.SecretKey)
+	pass, err := VerifySignature(req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if signatureStr != signature {
+	if !pass {
 		t.Fatal("not equal")
 	}
 }
