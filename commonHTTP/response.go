@@ -27,7 +27,10 @@ func GetRsp(reader io.Reader, usefulResponsePointer interface{}) error {
 	if err != nil {
 		return fmt.Errorf("json unmarshal error %v %v", err, usefulResponsePointer)
 	}
-	return nil
+	if ins.R.ErrNo == 0 {
+		return nil
+	}
+	return fmt.Errorf("errNo:%v errMsg:%v", ins.R.ErrNo, ins.R.ErrMsg)
 }
 
 func MakeRsp(usefulResponsePointer interface{}) *Response {
