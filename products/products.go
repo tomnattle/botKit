@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ifchange/botKit/config"
 	"github.com/ifchange/botKit/signature"
+	"io"
 	"net/http"
 )
 
@@ -39,18 +40,19 @@ type Product struct {
 	Name string `json:"product_name"`
 }
 
-func ProductPOST(productID int, subURI string) (*http.Request, error) {
+func ProductPOST(productID int, subURI string) (*http.Request, io.Writer, error) {
+	body := &bytes.Buffer{}
 	basicURI, err := getURI(productID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	req, err := http.NewRequest("POST", basicURI+subURI, &bytes.Buffer{})
+	req, err := http.NewRequest("POST", basicURI+subURI, body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	err = signature.AddSignature(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return req, nil
+	return req, body, nil
 }

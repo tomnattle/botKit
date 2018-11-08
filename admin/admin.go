@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/ifchange/botKit/config"
 	"github.com/ifchange/botKit/signature"
+	"io"
 	"net/http"
 )
 
@@ -22,14 +23,15 @@ func getURI() string {
 	return cfg.Admin
 }
 
-func AdminPOST(subURI string) (*http.Request, error) {
-	req, err := http.NewRequest("POST", getURI()+subURI, &bytes.Buffer{})
+func AdminPOST(subURI string) (*http.Request, io.Writer, error) {
+	body := &bytes.Buffer{}
+	req, err := http.NewRequest("POST", getURI()+subURI, body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	err = signature.AddSignature(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return req, nil
+	return req, body, nil
 }
