@@ -1,7 +1,6 @@
 package products
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/ifchange/botKit/config"
 	"github.com/ifchange/botKit/signature"
@@ -35,24 +34,49 @@ func getURI(productID int) (uri string, err error) {
 	return
 }
 
+func getName(productID int) (name string, err error) {
+	switch productID {
+	case 1:
+		name = "ChatBot"
+	case 3:
+		name = "决胜力"
+	case 4:
+		name = "Tsketch"
+	default:
+		err = fmt.Errorf("botKit products error productID:%d is not defind",
+			productID)
+	}
+	return
+}
+
 type Product struct {
 	ID   int    `json:"product_id"`
 	Name string `json:"product_name"`
 }
 
-func ProductPOST(productID int, subURI string) (*http.Request, io.Writer, error) {
-	body := &bytes.Buffer{}
+func GetProduct(productID int) (*Product, error) {
+	name, err := getName(productID)
+	if err != nil {
+		return nil, err
+	}
+	return &Product{
+		ID:   productID,
+		Name: name,
+	}, nil
+}
+
+func ProductPOST(productID int, subURI string, body io.Reader) (*http.Request, error) {
 	basicURI, err := getURI(productID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	req, err := http.NewRequest("POST", basicURI+subURI, body)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	err = signature.AddSignature(req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return req, body, nil
+	return req, nil
 }
