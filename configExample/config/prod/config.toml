@@ -1,8 +1,9 @@
-AppID       = 20
-SubAppID    = 3
-AppName     = "botKit"
-Environment = "prod"
-Addr        = ":63339"
+AppID           = 20
+SubAppID        = 3
+AppName         = "botKit"
+Environment     = "prod"
+Addr            = ":63339"
+InsideSignature = "123123"
 
 [Log]
 LogFile     = "/opt/log/botKit.log"
@@ -26,9 +27,6 @@ Model                   = "【e成】您的验证码为%s，此验证码%d分钟
 Secret                  = "fda50f228813a1777e40878fc44bd9b7"
 DurationMinutes         = 1
 AuthCodeDurationMinutes = 3
-
-[Signature]
-SecretKey = "secret-key"
 
 [URI]
 ChatBot     = "192.168.1.174:63333"

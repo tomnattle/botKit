@@ -12,17 +12,17 @@ var (
 )
 
 type Config struct {
-	AppID       int              `toml:"AppID"`
-	SubAppID    int              `toml:"SubAppID"`
-	AppName     string           `toml:"AppName"`
-	Environment string           `toml:"Environment"`
-	Addr        string           `toml:"Addr"`
-	Logger      *LoggerConfig    `toml:"Log"`
-	MySQL       *MySQLConfig     `toml:"MySQL"`
-	Redis       *RedisConfig     `toml:"Redis"`
-	SMS         *SMSConfig       `toml:"SMS"`
-	Signature   *SignatureConfig `toml:"Signature"`
-	URI         *URIConfig       `toml:"URI"`
+	AppID           int           `toml:"AppID"`
+	SubAppID        int           `toml:"SubAppID"`
+	AppName         string        `toml:"AppName"`
+	Environment     string        `toml:"Environment"`
+	Addr            string        `toml:"Addr"`
+	InsideSignature string        `toml:"InsideSignature"`
+	Logger          *LoggerConfig `toml:"Log"`
+	MySQL           *MySQLConfig  `toml:"MySQL"`
+	Redis           *RedisConfig  `toml:"Redis"`
+	SMS             *SMSConfig    `toml:"SMS"`
+	URI             *URIConfig    `toml:"URI"`
 }
 
 type LoggerConfig struct {
@@ -50,10 +50,6 @@ type SMSConfig struct {
 	Secret                  string `toml:"Secret"`
 	DurationMinutes         int    `toml:"DurationMinutes"`
 	AuthCodeDurationMinutes int    `toml:"AuthCodeDurationMinutes"`
-}
-
-type SignatureConfig struct {
-	SecretKey string `toml:"SecretKey"`
 }
 
 type URIConfig struct {

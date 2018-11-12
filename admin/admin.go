@@ -2,7 +2,7 @@ package admin
 
 import (
 	"github.com/ifchange/botKit/config"
-	"github.com/ifchange/botKit/signature"
+	"github.com/ifchange/botKit/insideSignature"
 	"io"
 	"net/http"
 )
@@ -27,7 +27,7 @@ func AdminPOST(subURI string, body io.Reader) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = signature.AddSignature(req)
+	err = insideSignature.AddSignature(req)
 	if err != nil {
 		return nil, err
 	}
