@@ -20,12 +20,12 @@ func AddSignature(req *http.Request) error {
 	if req == nil {
 		return fmt.Errorf("botKit signature nil http-request")
 	}
-	req.Header.Add("x", cfgInsideSignature)
+	req.Header.Add("X", cfgInsideSignature)
 	return nil
 }
 
 func VerifySignature(req *http.Request) (pass bool, err error) {
-	signatureStr := req.Header.Get("x")
+	signatureStr := req.Header.Get("X")
 	if signatureStr == "" {
 		err = fmt.Errorf("signature can not be null")
 		return
