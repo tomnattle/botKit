@@ -10,9 +10,8 @@ import (
 	"github.com/ifchange/botKit/commonHTTP"
 	"io"
 	"net/http"
-	"sort"
+	"net/url"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -139,18 +138,24 @@ func getSecretKey(managerID int) (string, error) {
 }
 
 func marshalArgs(args map[string]string) string {
-	keySort := []string{}
-	for k := range args {
-		keySort = append(keySort, k)
+	urlValues := url.Values{}
+	for k, v := range args {
+		urlValues.Set(k, v)
 	}
-	sort.Slice(keySort, func(i, j int) bool { return keySort[i] < keySort[j] })
-	source := []string{}
-	for _, k := range keySort {
-		source = append(source, fmt.Sprintf("%s===%s", k, args[k]))
-	}
-	return strings.Join(source, "&&&")
+	return urlValues.Encode()
 }
 
-func unmarshalArgs(string) (map[string]string, error) {
-	return nil, nil
+func unmarshalArgs(args string) (map[string]string, error) {
+	if len(args) == 0 {
+		return nil, nil
+	}
+	urlValues, err := url.ParseQuery(args)
+	if err != nil {
+		return nil, fmt.Errorf("try parse url encoding error %v %v", args, err)
+	}
+	result := make(map[string]string)
+	for k := range urlValues {
+		result[k] = urlValues.Get(k)
+	}
+	return result, nil
 }
