@@ -54,20 +54,22 @@ func GenerateSession(srcID int, managerID int, duration time.Duration, argsMappi
 	return base64.URLEncoding.EncodeToString(data), nil
 }
 
-func VerifySession(session string) (args map[string]string, pass bool, err error) {
+func VerifySession(session string) (srcID int, managerID int, args map[string]string, pass bool, err error) {
 	jsonSource, err := base64.URLEncoding.DecodeString(session)
 	if err != nil {
-		return args, pass, err
+		return srcID, managerID, args, pass, err
 	}
 	s := &Session{}
 	err = json.Unmarshal(jsonSource, s)
 	if err != nil {
-		return args, pass, err
+		return srcID, managerID, args, pass, err
 	}
+	srcID = s.SrcID
+	managerID = s.ManagerID
 
 	secretKey, err := getSecretKey(s.ManagerID)
 	if err != nil {
-		return args, pass, fmt.Errorf("srcID:%d managerID:%d getSecretKey error %v",
+		return srcID, managerID, args, pass, fmt.Errorf("srcID:%d managerID:%d getSecretKey error %v",
 			s.SrcID, s.ManagerID, err)
 	}
 
@@ -82,7 +84,7 @@ func VerifySession(session string) (args map[string]string, pass bool, err error
 	}
 	expireTime, err := time.Parse("20060102150405", s.Expire)
 	if err != nil {
-		return args, pass, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
+		return srcID, managerID, args, pass, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
 	}
 
 	if expireTime.Before(time.Now()) {
@@ -92,7 +94,7 @@ func VerifySession(session string) (args map[string]string, pass bool, err error
 
 	args, err = unmarshalArgs(s.Args)
 	if err != nil {
-		return args, pass, err
+		return srcID, managerID, args, pass, err
 	}
 	pass = true
 	return
