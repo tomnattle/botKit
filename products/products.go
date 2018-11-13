@@ -58,7 +58,6 @@ func getName(productID int) (name string, err error) {
 type Product struct {
 	ID   int    `json:"product_id"`
 	Name string `json:"product_name"`
-	Desc string `json:"description"`
 }
 
 func GetProduct(productID int) (*Product, error) {
