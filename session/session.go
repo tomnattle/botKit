@@ -41,7 +41,7 @@ func GenerateSession(from string, srcID, managerID, userID int, duration time.Du
 	return NewSession(from, srcID, managerID, userID, expire, secretKey)
 }
 
-func VerifySession(session string) (*Session, error) {
+func VerifySession(from string, session string) (*Session, error) {
 	jsonSource, err := base64.URLEncoding.DecodeString(session)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession base64 decode error %v", err)
@@ -50,6 +50,9 @@ func VerifySession(session string) (*Session, error) {
 	err = json.Unmarshal(jsonSource, s)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession json unmarshal error %v", err)
+	}
+	if from != s.From {
+		return nil, fmt.Errorf("VerifySession diff from %s:%s", from, s.From)
 	}
 	expireTime, err := time.Parse(ConstTimeFormat, s.Expire)
 	if err != nil {
