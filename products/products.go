@@ -37,11 +37,17 @@ func getURI(productID int) (uri string, err error) {
 func getName(productID int) (name string, err error) {
 	switch productID {
 	case 1:
-		name = "ChatBot"
+		name = "面试bot"
 	case 3:
 		name = "决胜力"
 	case 4:
-		name = "Tsketch"
+		name = "人才画像"
+	case 6:
+		name = "與情BI"
+	case 7:
+		name = "情商"
+	case 8:
+		name = "岗位评估"
 	default:
 		err = fmt.Errorf("botKit products error productID:%d is not defind",
 			productID)
