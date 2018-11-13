@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+const (
+	ConstTimeFormat = "20060102150405"
+)
+
 type Session struct {
 	SrcID     int    `json:"src_id"`
 	ManagerID int    `json:"manager_id"`
@@ -51,7 +55,7 @@ func VerifySession(session string) (srcID int, managerID int, args map[string]st
 	srcID = s.SrcID
 	managerID = s.ManagerID
 
-	expireTime, err := time.Parse("20060102150405", s.Expire)
+	expireTime, err := time.Parse(ConstTimeFormat, s.Expire)
 	if err != nil {
 		return srcID, managerID, args, pass, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
 	}
@@ -87,7 +91,7 @@ func VerifySession(session string) (srcID int, managerID int, args map[string]st
 }
 
 func NewSession(srcID int, managerID int, expire time.Time, args string, secretKey string) (string, error) {
-	expireStr := expire.Format("20060102150405")
+	expireStr := expire.Format(ConstTimeFormat)
 	source := strconv.Itoa(srcID) + strconv.Itoa(managerID) + expireStr + args + secretKey
 	sha1er := sha1.New()
 	io.WriteString(sha1er, source)
