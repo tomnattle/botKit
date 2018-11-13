@@ -1,3 +1,4 @@
+// outside
 package session
 
 import (

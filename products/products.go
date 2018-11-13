@@ -3,7 +3,7 @@ package products
 import (
 	"fmt"
 	"github.com/ifchange/botKit/config"
-	"github.com/ifchange/botKit/insideSignature"
+	"github.com/ifchange/botKit/signature"
 	"io"
 	"net/http"
 )
@@ -81,7 +81,7 @@ func ProductPOST(productID int, subURI string, body io.Reader) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
-	err = insideSignature.AddSignature(req)
+	err = signature.AddSignature(req)
 	if err != nil {
 		return nil, err
 	}
