@@ -124,6 +124,7 @@ func Write(w UploadRequest) (*Response, error) {
 		if resp.Headers["Status-Code"] != "200" {
 			continue
 		}
+
 		err = json.Unmarshal(resp.Body, result)
 		if err != nil {
 			continue
