@@ -23,7 +23,7 @@ const (
 )
 
 type Session struct {
-	From      string `json:"From"` // A B C
+	From      string `json:"from"` // A B C
 	SrcID     int    `json:"src_id"`
 	ManagerID int    `json:"manager_id"`
 	UserID    int    `json:"user_id"`
