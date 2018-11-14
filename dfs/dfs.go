@@ -104,7 +104,7 @@ func Write(w UploadRequest) (*Response, error) {
 		w.Ext = "txt"
 	}
 
-	req.R.M = "append"
+	req.R.M = "upload"
 	req.R.P = w
 
 	post, err := json.Marshal(req)
@@ -124,7 +124,6 @@ func Write(w UploadRequest) (*Response, error) {
 		if resp.Headers["Status-Code"] != "200" {
 			continue
 		}
-
 		err = json.Unmarshal(resp.Body, result)
 		if err != nil {
 			continue
