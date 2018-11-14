@@ -33,7 +33,7 @@ type Session struct {
 
 func GenerateSession(from string, srcID, managerID, userID int, duration time.Duration) (string, error) {
 	expire := time.Now().Add(duration)
-	secretKey, err := GetSecretKey(managerID)
+	secretKey, err := getSecretKey(srcID, managerID)
 	if err != nil {
 		return "", fmt.Errorf("GenerateSession from:%s srcID:%d managerID:%d userID:%d getSecretKey error %v",
 			from, srcID, managerID, userID, err)
@@ -61,7 +61,7 @@ func VerifySession(from string, session string) (*Session, error) {
 	if expireTime.Before(time.Now()) {
 		return nil, fmt.Errorf("VerifySession session is timeout")
 	}
-	secretKey, err := GetSecretKey(s.ManagerID)
+	secretKey, err := getSecretKey(s.SrcID, s.ManagerID)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d getSecretKey error %v",
 			s.SrcID, s.ManagerID, s.UserID, err)
@@ -104,11 +104,15 @@ func NewSession(from string, srcID, managerID, userID int, expire time.Time, sec
 	return base64.URLEncoding.EncodeToString(data), nil
 }
 
-func GetSecretKey(managerID int) (string, error) {
+func getSecretKey(srcID, managerID int) (string, error) {
 	body := &bytes.Buffer{}
 	reqBody := commonHTTP.MakeReq(&struct {
+		SrcID     int `json:"src_id"`
 		ManagerID int `json:"id"`
-	}{managerID})
+	}{
+		SrcID:     srcID,
+		ManagerID: managerID,
+	})
 
 	reqData, err := json.Marshal(reqBody)
 	if err != nil {
