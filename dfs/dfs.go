@@ -104,7 +104,7 @@ func Write(w UploadRequest) (*Response, error) {
 		w.Ext = "txt"
 	}
 
-	req.R.M = "append"
+	req.R.M = "upload"
 	req.R.P = w
 
 	post, err := json.Marshal(req)
