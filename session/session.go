@@ -85,7 +85,7 @@ func NewSession(from string, srcID, managerID, userID int, expire time.Time, sec
 	}
 
 	expireStr := expire.Format(ConstTimeFormat)
-	source := strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + expireStr + secretKey
+	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + expireStr + secretKey
 	sha1er := sha1.New()
 	io.WriteString(sha1er, source)
 	signature := fmt.Sprintf("%x", sha1er.Sum(nil))
