@@ -8,6 +8,9 @@ InsideSignature = "123123"
 [Log]
 LogFile     = "/opt/log/botKit.log"
 
+[Dfs]
+Server      = "http://dev.dfs.rpc/Dfs"
+
 [MySQL]
 Username    = "devuser"
 Password    = "devuser"
