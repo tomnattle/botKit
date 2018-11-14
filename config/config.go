@@ -23,6 +23,11 @@ type Config struct {
 	Redis           *RedisConfig  `toml:"Redis"`
 	SMS             *SMSConfig    `toml:"SMS"`
 	URI             *URIConfig    `toml:"URI"`
+	Dfs             *DfsConfig    `toml:"Dfs"`
+}
+
+type DfsConfig struct {
+	Server string `toml:"Server"`
 }
 
 type LoggerConfig struct {
