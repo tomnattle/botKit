@@ -2,15 +2,11 @@
 package session
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ifchange/botKit/admin"
-	"github.com/ifchange/botKit/commonHTTP"
 	"io"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -31,7 +27,8 @@ type Session struct {
 	Signature string `json:"signature"`
 }
 
-func GenerateSession(from string, srcID, managerID, userID int, duration time.Duration) (string, error) {
+func GenerateSession(from string, srcID, managerID, userID int, duration time.Duration,
+	getSecretKey func(srcID int, managerID int) (secretKey string, err error)) (string, error) {
 	expire := time.Now().Add(duration)
 	secretKey, err := getSecretKey(srcID, managerID)
 	if err != nil {
@@ -41,7 +38,8 @@ func GenerateSession(from string, srcID, managerID, userID int, duration time.Du
 	return NewSession(from, srcID, managerID, userID, expire, secretKey)
 }
 
-func VerifySession(from string, session string) (*Session, error) {
+func VerifySession(from string, session string,
+	getSecretKey func(srcID int, managerID int) (secretKey string, err error)) (*Session, error) {
 	jsonSource, err := base64.URLEncoding.DecodeString(session)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession base64 decode error %v", err)
@@ -107,46 +105,4 @@ func NewSignature(from string, srcID, managerID, userID int, expire time.Time, s
 	sha1er := sha1.New()
 	io.WriteString(sha1er, source)
 	return fmt.Sprintf("%x", sha1er.Sum(nil)), nil
-}
-
-func getSecretKey(srcID, managerID int) (string, error) {
-	body := &bytes.Buffer{}
-	reqBody := commonHTTP.MakeReq(&struct {
-		SrcID     int `json:"src_id"`
-		ManagerID int `json:"id"`
-	}{
-		SrcID:     srcID,
-		ManagerID: managerID,
-	})
-
-	reqData, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", err
-	}
-	_, err = body.Write(reqData)
-	if err != nil {
-		return "", fmt.Errorf("try write body error %v", err)
-	}
-
-	req, err := admin.AdminPOST("/companies/getsecretkey", body)
-	if err != nil {
-		return "", fmt.Errorf("admin make request error %v", err)
-	}
-	rsp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("admin request error %v", err)
-	}
-	defer rsp.Body.Close()
-
-	secretKey := ""
-
-	err = commonHTTP.GetRsp(rsp.Body, &secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	if len(secretKey) == 0 {
-		return "", fmt.Errorf("empty secretKey")
-	}
-	return secretKey, nil
 }
