@@ -7,15 +7,14 @@ import (
 )
 
 func TestSession(t *testing.T) {
-	from := ConstFromA
-	srcID := 1
-	managerID := 1
-	userID := 1
-	duration := time.Duration(6) * time.Hour
-	getSecretKey := func(int, int) (string, error) {
-		secretKey := "abc"
-		return secretKey, nil
-	}
+	from := ConstFromC
+	srcID := 2
+	managerID := 0
+	userID := 0
+	duration := time.Duration(6) * time.Hour * 100
+	secretKey := "d61de49e5303f036692b171fe0d279e8"
+
+	getSecretKey := func(int, int) (string, error) { return secretKey, nil }
 
 	s, err := GenerateSession(from, srcID, managerID, userID, duration, getSecretKey)
 
