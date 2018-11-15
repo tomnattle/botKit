@@ -66,42 +66,47 @@ func VerifySession(from string, session string) (*Session, error) {
 		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d getSecretKey error %v",
 			s.SrcID, s.ManagerID, s.UserID, err)
 	}
-	newSession, err := NewSession(s.From, s.SrcID, s.ManagerID, s.UserID, expireTime, secretKey)
+	newSignature, err := NewSignature(s.From, s.SrcID, s.ManagerID, s.UserID, expireTime, secretKey)
 	if err != nil {
-		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d NewSession error %v",
+		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d NewSignature error %v",
 			s.SrcID, s.ManagerID, s.UserID, err)
 	}
-	if newSession != session {
+	if newSignature != s.Signature {
 		return nil, fmt.Errorf("VerifySession unauthorized")
 	}
 	return s, nil
 }
 
 func NewSession(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
-	switch from {
-	case ConstFromA, ConstFromB, ConstFromC:
-	default:
-		return "", fmt.Errorf("NewSession unknown from %s", from)
+	signature, err := NewSignature(from, srcID, managerID, userID, expire, secretKey)
+	if err != nil {
+		return "", fmt.Errorf("NewSignature error %v", err)
 	}
-
-	expireStr := expire.Format(ConstTimeFormat)
-	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + expireStr + secretKey
-	sha1er := sha1.New()
-	io.WriteString(sha1er, source)
-	signature := fmt.Sprintf("%x", sha1er.Sum(nil))
-
 	data, err := json.Marshal(&Session{
 		From:      from,
 		SrcID:     srcID,
 		ManagerID: managerID,
 		UserID:    userID,
-		Expire:    expireStr,
+		Expire:    expire.Format(ConstTimeFormat),
 		Signature: signature,
 	})
 	if err != nil {
 		return "", fmt.Errorf("NewSession json marshal error %v", err)
 	}
 	return base64.URLEncoding.EncodeToString(data), nil
+}
+
+func NewSignature(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
+	switch from {
+	case ConstFromA, ConstFromB, ConstFromC:
+	default:
+		return "", fmt.Errorf("NewSession unknown from %s", from)
+	}
+
+	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + expire.Format(ConstTimeFormat) + secretKey
+	sha1er := sha1.New()
+	io.WriteString(sha1er, source)
+	return fmt.Sprintf("%x", sha1er.Sum(nil)), nil
 }
 
 func getSecretKey(srcID, managerID int) (string, error) {
