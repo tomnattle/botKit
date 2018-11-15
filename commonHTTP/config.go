@@ -10,6 +10,7 @@ func errCodeConfig() []*errConfig {
 		&errConfig{code: 4005, msg: "无效签名"},
 		&errConfig{code: 4006, msg: "用户密码不可为空"},
 		&errConfig{code: 4007, msg: "重复提交"},
+		&errConfig{code: 4008, msg: "产品列表为空"},
 
 		// Server error
 		&errConfig{code: 5001, msg: "系统错误"},
