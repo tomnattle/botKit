@@ -16,6 +16,8 @@ const (
 	ConstFromA      = "A"
 	ConstFromB      = "B"
 	ConstFromC      = "C"
+
+	constMaxDuration = time.Duration(7*24) * time.Hour
 )
 
 type Session struct {
@@ -29,6 +31,10 @@ type Session struct {
 
 func GenerateSession(from string, srcID, managerID, userID int, duration time.Duration,
 	getSecretKey func(srcID int, managerID int) (secretKey string, err error)) (string, error) {
+	if duration > constMaxDuration {
+		return "", fmt.Errorf("GenerateSession error out of max expire:%v want:%v",
+			constMaxDuration, duration)
+	}
 	expire := time.Now().Add(duration)
 	secretKey, err := getSecretKey(srcID, managerID)
 	if err != nil {
@@ -56,8 +62,13 @@ func VerifySession(from string, session string,
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
 	}
-	if expireTime.Before(time.Now()) {
+	now := time.Now()
+	if expireTime.Before(now) {
 		return nil, fmt.Errorf("VerifySession session is timeout")
+	}
+	if expireTime.Sub(now) > constMaxDuration {
+		return nil, fmt.Errorf("VerifySession error out of max expire %v",
+			expireTime)
 	}
 	secretKey, err := getSecretKey(s.SrcID, s.ManagerID)
 	if err != nil {
