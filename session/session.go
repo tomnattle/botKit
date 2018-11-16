@@ -1,4 +1,3 @@
-// outside
 package session
 
 import (
@@ -20,6 +19,8 @@ const (
 	constMaxDuration = time.Duration(7*24) * time.Hour
 )
 
+var loc, _ = time.LoadLocation("Asia/Shanghai")
+
 type Session struct {
 	From      string `json:"from"` // A B C
 	SrcID     int    `json:"src_id"`
@@ -35,7 +36,7 @@ func GenerateSession(from string, srcID, managerID, userID int, duration time.Du
 		return "", fmt.Errorf("GenerateSession error out of max expire:%v want:%v",
 			constMaxDuration, duration)
 	}
-	expire := time.Now().Add(duration)
+	expire := time.Now().In(loc).Add(duration)
 	secretKey, err := getSecretKey(srcID, managerID)
 	if err != nil {
 		return "", fmt.Errorf("GenerateSession from:%s srcID:%d managerID:%d userID:%d getSecretKey error %v",
@@ -58,7 +59,7 @@ func VerifySession(from string, session string,
 	if from != s.From {
 		return nil, fmt.Errorf("VerifySession diff from %s:%s", from, s.From)
 	}
-	expireTime, err := time.Parse(ConstTimeFormat, s.Expire)
+	expireTime, err := time.ParseInLocation(ConstTimeFormat, s.Expire, loc)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
 	}
