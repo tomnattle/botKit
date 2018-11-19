@@ -6,6 +6,7 @@ import (
 	"github.com/ifchange/botKit/signature"
 	"io"
 	"net/http"
+	"time"
 )
 
 var (
@@ -69,6 +70,10 @@ func GetProduct(productID int) (*Product, error) {
 		ID:   productID,
 		Name: name,
 	}, nil
+}
+
+func GetProductExpire(managerID int, productID int) (time.Time, error) {
+	return time.Now().Add(time.Duration(1) * time.Hour), nil
 }
 
 func ProductPOST(productID int, subURI string, body io.Reader) (*http.Request, error) {
