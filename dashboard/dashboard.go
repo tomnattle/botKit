@@ -1,4 +1,4 @@
-package admin
+package dashboard
 
 import (
 	"github.com/ifchange/botKit/config"
@@ -13,16 +13,16 @@ var (
 
 func init() {
 	cfg = config.GetConfig().URI
-	if cfg == nil || cfg.Admin == "" {
-		panic("botKit-admin products config is nil")
+	if cfg == nil || cfg.Dashboard == "" {
+		panic("botKit-dashboard products config is nil")
 	}
 }
 
 func getURI() string {
-	return cfg.Admin
+	return cfg.Dashboard
 }
 
-func AdminPOST(subURI string, body io.Reader) (*http.Request, error) {
+func DashboardPOST(subURI string, body io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest("POST", getURI()+subURI, body)
 	if err != nil {
 		return nil, err

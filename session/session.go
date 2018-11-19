@@ -1,161 +1,119 @@
 package session
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ifchange/botKit/admin"
-	"github.com/ifchange/botKit/commonHTTP"
 	"io"
-	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 )
 
+const (
+	ConstTimeFormat = "20060102150405"
+	ConstFromA      = "A"
+	ConstFromB      = "B"
+	ConstFromC      = "C"
+
+	constMaxDuration = time.Duration(7*24) * time.Hour
+)
+
 type Session struct {
+	From      string `json:"from"` // A B C
 	SrcID     int    `json:"src_id"`
 	ManagerID int    `json:"manager_id"`
+	UserID    int    `json:"user_id"`
 	Expire    string `json:"expire"`
-	Args      string `json:"args"`
 	Signature string `json:"signature"`
 }
 
-func GenerateSession(srcID int, managerID int, duration time.Duration, argsMapping map[string]string) (string, error) {
-	if argsMapping == nil {
-		argsMapping = make(map[string]string)
+func GenerateSession(from string, srcID, managerID, userID int, duration time.Duration,
+	getSecretKey func(srcID int, managerID int) (secretKey string, err error)) (string, error) {
+	if duration > constMaxDuration {
+		return "", fmt.Errorf("GenerateSession error out of max expire:%v want:%v",
+			constMaxDuration, duration)
 	}
-	args := marshalArgs(argsMapping)
-
-	expire := time.Now().Add(duration).Format("20060102150405")
-	secretKey, err := getSecretKey(managerID)
+	expire := time.Now().UTC().Add(duration)
+	secretKey, err := getSecretKey(srcID, managerID)
 	if err != nil {
-		return "", fmt.Errorf("srcID:%d managerID:%d getSecretKey error %v",
-			srcID, managerID, err)
+		return "", fmt.Errorf("GenerateSession from:%s srcID:%d managerID:%d userID:%d getSecretKey error %v",
+			from, srcID, managerID, userID, err)
 	}
-	source := strconv.Itoa(srcID) + strconv.Itoa(managerID) + expire + args + secretKey
-	sha1er := sha1.New()
-	io.WriteString(sha1er, source)
-	signature := fmt.Sprintf("%x", sha1er.Sum(nil))
-
-	data, err := json.Marshal(&Session{
-		SrcID:     srcID,
-		ManagerID: managerID,
-		Expire:    expire,
-		Args:      args,
-		Signature: signature,
-	})
-	if err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(data), nil
+	return newSession(from, srcID, managerID, userID, expire, secretKey)
 }
 
-func VerifySession(session string) (srcID int, managerID int, args map[string]string, pass bool, err error) {
+func VerifySession(from string, session string,
+	getSecretKey func(srcID int, managerID int) (secretKey string, err error)) (*Session, error) {
 	jsonSource, err := base64.URLEncoding.DecodeString(session)
 	if err != nil {
-		return srcID, managerID, args, pass, err
+		return nil, fmt.Errorf("VerifySession base64 decode error %v", err)
 	}
 	s := &Session{}
 	err = json.Unmarshal(jsonSource, s)
 	if err != nil {
-		return srcID, managerID, args, pass, err
+		return nil, fmt.Errorf("VerifySession json unmarshal error %v", err)
 	}
-	srcID = s.SrcID
-	managerID = s.ManagerID
-
-	secretKey, err := getSecretKey(s.ManagerID)
+	if from != s.From {
+		return nil, fmt.Errorf("VerifySession diff from %s:%s", from, s.From)
+	}
+	expireTime, err := time.Parse(ConstTimeFormat, s.Expire)
 	if err != nil {
-		return srcID, managerID, args, pass, fmt.Errorf("srcID:%d managerID:%d getSecretKey error %v",
-			s.SrcID, s.ManagerID, err)
+		return nil, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
+	}
+	expireTime = expireTime.UTC()
+	now := time.Now().UTC()
+	if expireTime.Before(now) {
+		return nil, fmt.Errorf("VerifySession session is timeout")
+	}
+	if expireTime.Sub(now) > constMaxDuration {
+		return nil, fmt.Errorf("VerifySession error out of max expire %v",
+			expireTime)
+	}
+	secretKey, err := getSecretKey(s.SrcID, s.ManagerID)
+	if err != nil {
+		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d getSecretKey error %v",
+			s.SrcID, s.ManagerID, s.UserID, err)
+	}
+	newSignature, err := newSignature(s.From, s.SrcID, s.ManagerID, s.UserID, expireTime, secretKey)
+	if err != nil {
+		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d NewSignature error %v",
+			s.SrcID, s.ManagerID, s.UserID, err)
+	}
+	if newSignature != s.Signature {
+		return nil, fmt.Errorf("VerifySession unauthorized")
+	}
+	return s, nil
+}
+
+func newSession(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
+	signature, err := newSignature(from, srcID, managerID, userID, expire, secretKey)
+	if err != nil {
+		return "", fmt.Errorf("newSignature error %v", err)
+	}
+	data, err := json.Marshal(&Session{
+		From:      from,
+		SrcID:     srcID,
+		ManagerID: managerID,
+		UserID:    userID,
+		Expire:    expire.Format(ConstTimeFormat),
+		Signature: signature,
+	})
+	if err != nil {
+		return "", fmt.Errorf("newSession json marshal error %v", err)
+	}
+	return base64.URLEncoding.EncodeToString(data), nil
+}
+
+func newSignature(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
+	switch from {
+	case ConstFromA, ConstFromB, ConstFromC:
+	default:
+		return "", fmt.Errorf("newSignature unknown from %s", from)
 	}
 
-	source := strconv.Itoa(s.SrcID) + strconv.Itoa(s.ManagerID) + s.Expire + s.Args + secretKey
+	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + expire.Format(ConstTimeFormat) + secretKey
 	sha1er := sha1.New()
 	io.WriteString(sha1er, source)
-	signature := fmt.Sprintf("%x", sha1er.Sum(nil))
-
-	if signature != s.Signature {
-		pass = false
-		return
-	}
-	expireTime, err := time.Parse("20060102150405", s.Expire)
-	if err != nil {
-		return srcID, managerID, args, pass, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
-	}
-
-	if expireTime.Before(time.Now()) {
-		pass = false
-		return
-	}
-
-	args, err = unmarshalArgs(s.Args)
-	if err != nil {
-		return srcID, managerID, args, pass, err
-	}
-	pass = true
-	return
-}
-
-func getSecretKey(managerID int) (string, error) {
-	body := &bytes.Buffer{}
-	reqBody := commonHTTP.MakeReq(&struct {
-		ManagerID int `json:"id"`
-	}{managerID})
-
-	reqData, err := json.Marshal(reqBody)
-	if err != nil {
-		return "", err
-	}
-	_, err = body.Write(reqData)
-	if err != nil {
-		return "", fmt.Errorf("try write body error %v", err)
-	}
-
-	req, err := admin.AdminPOST("/companies/getsecretkey", body)
-	if err != nil {
-		return "", fmt.Errorf("admin make request error %v", err)
-	}
-	rsp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("admin request error %v", err)
-	}
-	defer rsp.Body.Close()
-
-	secretKey := ""
-
-	err = commonHTTP.GetRsp(rsp.Body, &secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	if len(secretKey) == 0 {
-		return "", fmt.Errorf("empty secretKey")
-	}
-	return secretKey, nil
-}
-
-func marshalArgs(args map[string]string) string {
-	urlValues := url.Values{}
-	for k, v := range args {
-		urlValues.Set(k, v)
-	}
-	return urlValues.Encode()
-}
-
-func unmarshalArgs(args string) (map[string]string, error) {
-	if len(args) == 0 {
-		return nil, nil
-	}
-	urlValues, err := url.ParseQuery(args)
-	if err != nil {
-		return nil, fmt.Errorf("try parse url encoding error %v %v", args, err)
-	}
-	result := make(map[string]string)
-	for k := range urlValues {
-		result[k] = urlValues.Get(k)
-	}
-	return result, nil
+	return fmt.Sprintf("%x", sha1er.Sum(nil)), nil
 }

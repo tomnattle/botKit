@@ -13,7 +13,7 @@ func CheckName(name string) error {
 }
 
 func CheckPhone(phone string) error {
-	match, err := regexp.MatchString(`1[0-9]{10,10}`, phone)
+	match, err := regexp.MatchString(`^1[0-9]{10,10}$`, phone)
 	if err != nil {
 		return fmt.Errorf("RegexpPhone error phone:%v err:%v",
 			phone, err)

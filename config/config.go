@@ -15,6 +15,7 @@ type Config struct {
 	AppID           int           `toml:"AppID"`
 	SubAppID        int           `toml:"SubAppID"`
 	AppName         string        `toml:"AppName"`
+	ProductID       int           `toml:"ProductID"`
 	Environment     string        `toml:"Environment"`
 	Addr            string        `toml:"Addr"`
 	InsideSignature string        `toml:"InsideSignature"`

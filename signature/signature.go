@@ -1,4 +1,5 @@
-package insideSignature
+// inside
+package signature
 
 import (
 	"fmt"
@@ -24,15 +25,13 @@ func AddSignature(req *http.Request) error {
 	return nil
 }
 
-func VerifySignature(req *http.Request) (pass bool, err error) {
+func VerifySignature(req *http.Request) error {
 	signatureStr := req.Header.Get("X")
 	if signatureStr == "" {
-		err = fmt.Errorf("signature can not be null")
-		return
+		return fmt.Errorf("VerifySignature signature can not be null")
 	}
 	if cfgInsideSignature == signatureStr {
-		pass = true
-		return
+		return nil
 	}
-	return
+	return fmt.Errorf("VerifySignature unauthorized")
 }
