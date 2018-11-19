@@ -1,7 +1,11 @@
 package products
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/ifchange/botKit/admin"
+	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
 	"github.com/ifchange/botKit/signature"
 	"io"
@@ -72,8 +76,58 @@ func GetProduct(productID int) (*Product, error) {
 	}, nil
 }
 
-func GetProductExpire(managerID int, productID int) (time.Time, error) {
-	return time.Now().Add(time.Duration(1) * time.Hour), nil
+func GetProductExpire(managerID int, productID int) (expire time.Time, err error) {
+	body, err := json.Marshal(commonHTTP.MakeReq(&struct {
+		ManagerID int `json:"company_id"`
+	}{managerID}))
+	if err != nil {
+		err = fmt.Errorf("GetProductExpire json marshal error %v", err)
+		return
+	}
+	req, err := admin.AdminPOST("/companies/getproducts", bytes.NewBuffer(body))
+	if err != nil {
+		err = fmt.Errorf("GetProductExpire try make A-node request error %v", err)
+		return
+	}
+	rsp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		err = fmt.Errorf("GetProductExpire A-node request error %v", err)
+		return
+	}
+	reply := []struct {
+		IsDeleted int `json:"is_deleted"`
+		Deadlime  int `json:"deadline"`
+		ProductID int `json:"product_id"`
+	}{}
+	err = commonHTTP.GetRsp(rsp.Body, &reply)
+	if err != nil {
+		err = fmt.Errorf("GetProductExpire A-node response error %v", err)
+		return
+	}
+
+	deadTime := -1
+	for _, ro := range reply {
+		if ro.IsDeleted != 0 {
+			continue
+		}
+		if ro.ProductID != productID {
+			continue
+		}
+		deadTime = ro.Deadlime
+	}
+	if deadTime < 0 {
+		err = fmt.Errorf("product is not exist in A-node managerID:%v productID:%v",
+			managerID, productID)
+		return
+	}
+	if deadTime == 0 {
+		// no limit
+		expire = time.Now().Add(time.Duration(1) * time.Hour)
+		return
+	}
+
+	expire = time.Unix(int64(deadTime), 0)
+	return
 }
 
 func ProductPOST(productID int, subURI string, body io.Reader) (*http.Request, error) {
