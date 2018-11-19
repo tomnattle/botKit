@@ -1,6 +1,7 @@
 AppID           = 20
 SubAppID        = 3
 AppName         = "botKit"
+ProductID       = 0
 Environment     = "test"
 Addr            = ":63339"
 InsideSignature = "123123"
