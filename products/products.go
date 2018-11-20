@@ -39,38 +39,57 @@ func getURI(productID int) (uri string, err error) {
 	return
 }
 
-func getName(productID int) (name string, err error) {
-	switch productID {
-	case 1:
-		name = "面试bot"
-	case 3:
-		name = "决胜力"
-	case 4:
-		name = "人才画像"
-	case 6:
-		name = "與情BI"
-	case 7:
-		name = "情商"
-	case 8:
-		name = "岗位评估"
-	default:
+func getProductInfo(productID int) (name string, desc string, sort int, err error) {
+	body, err := json.Marshal(commonHTTP.MakeReq(&struct {
+		ProductID int `json:"id"`
+	}{productID}))
+	if err != nil {
+		err = fmt.Errorf("getProductInfo json marshal error %v", err)
+		return
 	}
+	req, err := admin.AdminPOST("/products/detail", bytes.NewBuffer(body))
+	if err != nil {
+		err = fmt.Errorf("getProductInfo try make A-node request error %v", err)
+		return
+	}
+	rsp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		err = fmt.Errorf("getProductInfo A-node request error %v", err)
+		return
+	}
+	reply := struct {
+		Name string `json:"name"`
+		Desc string `json:"desc"`
+		Sort int    `json:"sort"`
+	}{}
+	err = commonHTTP.GetRsp(rsp.Body, &reply)
+	if err != nil {
+		err = fmt.Errorf("getProductInfo A-node response error %v", err)
+		return
+	}
+	name = reply.Name
+	desc = reply.Desc
+	sort = reply.Sort
 	return
 }
 
 type Product struct {
 	ID   int    `json:"product_id"`
 	Name string `json:"product_name"`
+	Desc string `json:"desc"`
+	Sort int    `json:"sort"`
 }
 
 func GetProduct(productID int) (*Product, error) {
-	name, err := getName(productID)
+	name, desc, sort, err := getProductInfo(productID)
 	if err != nil {
 		return nil, err
 	}
 	return &Product{
 		ID:   productID,
 		Name: name,
+		Desc: desc,
+		Sort: sort,
 	}, nil
 }
 
