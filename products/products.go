@@ -54,8 +54,6 @@ func getName(productID int) (name string, err error) {
 	case 8:
 		name = "岗位评估"
 	default:
-		err = fmt.Errorf("botKit products error productID:%d is not defind",
-			productID)
 	}
 	return
 }
