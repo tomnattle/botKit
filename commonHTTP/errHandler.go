@@ -85,7 +85,7 @@ func ErrHandler(err error, c echo.Context) {
 
 	if errC, ok := err.(*errCommon); ok {
 		switch config.GetConfig().Environment {
-		case "dev", "test":
+		case "dev":
 			rsp.R.ErrNo = errC.errCode
 			rsp.R.ErrMsg = errC.errMsg + errC.logMsg
 			logMsg = errC.logMsg
