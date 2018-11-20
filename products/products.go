@@ -39,13 +39,38 @@ func getURI(productID int) (uri string, err error) {
 	return
 }
 
+func getName(productID int) (name string, err error) {
+	switch productID {
+	case 1:
+		name = "面试bot"
+	case 3:
+		name = "决胜力"
+	case 4:
+		name = "人才画像"
+	case 6:
+		name = "與情BI"
+	case 7:
+		name = "情商"
+	case 8:
+		name = "岗位评估"
+	default:
+	}
+	return
+}
+
 type Product struct {
-	ID int `json:"product_id"`
+	ID   int    `json:"product_id"`
+	Name string `json:"product_name"`
 }
 
 func GetProduct(productID int) (*Product, error) {
+	name, err := getName(productID)
+	if err != nil {
+		return nil, err
+	}
 	return &Product{
-		ID: productID,
+		ID:   productID,
+		Name: name,
 	}, nil
 }
 
