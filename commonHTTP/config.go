@@ -14,6 +14,7 @@ func errCodeConfig() []*errConfig {
 		&errConfig{code: 4009, msg: "数据已存在"},
 		&errConfig{code: 4010, msg: "手机号格式错误"},
 		&errConfig{code: 4011, msg: "产品不存在"},
+		&errConfig{code: 4012, msg: "手机已存在"},
 
 		// Server error
 		&errConfig{code: 5001, msg: "系统错误"},
