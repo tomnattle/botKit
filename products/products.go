@@ -39,6 +39,16 @@ func getURI(productID int) (uri string, err error) {
 	return
 }
 
+type Product struct {
+	ID int `json:"product_id"`
+}
+
+func GetProduct(productID int) (*Product, error) {
+	return &Product{
+		ID: productID,
+	}, nil
+}
+
 func GetProductExpire(managerID int, productID int) (expire time.Time, err error) {
 	body, err := json.Marshal(commonHTTP.MakeReq(&struct {
 		ManagerID int `json:"company_id"`
