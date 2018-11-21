@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
 	"time"
 )
 
@@ -23,7 +22,7 @@ type Session struct {
 	SrcID     int    `json:"src_id"`
 	ManagerID int    `json:"manager_id"`
 	UserID    int    `json:"user_id"`
-	Expire    string `json:"expire"`
+	Expire    int    `json:"expire"`
 	Signature string `json:"signature"`
 }
 
@@ -56,24 +55,20 @@ func VerifySession(from string, session string,
 	if from != s.From {
 		return nil, fmt.Errorf("VerifySession diff from %s:%s", from, s.From)
 	}
-	expireTime, err := strconv.ParseInt(s.Expire, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
-	}
 	now := time.Now().Unix()
-	if now > expireTime {
+	if now > int64(s.Expire) {
 		return nil, fmt.Errorf("VerifySession session is timeout")
 	}
-	if expireTime-now > int64(constMaxDuration.Seconds()) {
+	if int64(s.Expire)-now > int64(constMaxDuration.Seconds()) {
 		return nil, fmt.Errorf("VerifySession error out of max expire %v",
-			expireTime)
+			s.Expire)
 	}
 	secretKey, err := getSecretKey(s.SrcID, s.ManagerID)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d getSecretKey error %v",
 			s.SrcID, s.ManagerID, s.UserID, err)
 	}
-	newSignature, err := newSignature(s.From, s.SrcID, s.ManagerID, s.UserID, expireTime, secretKey)
+	newSignature, err := newSignature(s.From, s.SrcID, s.ManagerID, s.UserID, int64(s.Expire), secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d NewSignature error %v",
 			s.SrcID, s.ManagerID, s.UserID, err)
@@ -94,7 +89,7 @@ func newSession(from string, srcID, managerID, userID int, expireSeconds int64, 
 		SrcID:     srcID,
 		ManagerID: managerID,
 		UserID:    userID,
-		Expire:    strconv.FormatInt(expireSeconds, 10),
+		Expire:    int(expireSeconds),
 		Signature: signature,
 	})
 	if err != nil {
