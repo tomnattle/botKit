@@ -110,7 +110,7 @@ func newSignature(from string, srcID, managerID, userID int, expireSeconds int64
 		return "", fmt.Errorf("newSignature unknown from %s", from)
 	}
 
-	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + strconv.FormatInt(expireSeconds, 10) + secretKey
+	source := fmt.Sprintf("%s%d%d%d%d%s", from, srcID, managerID, userID, expireSeconds, secretKey)
 	sha1er := sha1.New()
 	io.WriteString(sha1er, source)
 	return fmt.Sprintf("%x", sha1er.Sum(nil)), nil
