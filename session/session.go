@@ -11,10 +11,9 @@ import (
 )
 
 const (
-	ConstTimeFormat = "20060102150405"
-	ConstFromA      = "A"
-	ConstFromB      = "B"
-	ConstFromC      = "C"
+	ConstFromA = "A"
+	ConstFromB = "B"
+	ConstFromC = "C"
 
 	constMaxDuration = time.Duration(7*24) * time.Hour
 )
@@ -34,7 +33,7 @@ func GenerateSession(from string, srcID, managerID, userID int, duration time.Du
 		return "", fmt.Errorf("GenerateSession error out of max expire:%v want:%v",
 			constMaxDuration, duration)
 	}
-	expire := time.Now().UTC().Add(duration)
+	expire := time.Now().Unix() + int64(duration.Seconds())
 	secretKey, err := getSecretKey(srcID, managerID)
 	if err != nil {
 		return "", fmt.Errorf("GenerateSession from:%s srcID:%d managerID:%d userID:%d getSecretKey error %v",
@@ -57,16 +56,15 @@ func VerifySession(from string, session string,
 	if from != s.From {
 		return nil, fmt.Errorf("VerifySession diff from %s:%s", from, s.From)
 	}
-	expireTime, err := time.Parse(ConstTimeFormat, s.Expire)
+	expireTime, err := strconv.ParseInt(s.Expire, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
 	}
-	expireTime = expireTime.UTC()
-	now := time.Now().UTC()
-	if expireTime.Before(now) {
+	now := time.Now().Unix()
+	if now > expireTime {
 		return nil, fmt.Errorf("VerifySession session is timeout")
 	}
-	if expireTime.Sub(now) > constMaxDuration {
+	if expireTime-now > int64(constMaxDuration.Seconds()) {
 		return nil, fmt.Errorf("VerifySession error out of max expire %v",
 			expireTime)
 	}
@@ -86,8 +84,8 @@ func VerifySession(from string, session string,
 	return s, nil
 }
 
-func newSession(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
-	signature, err := newSignature(from, srcID, managerID, userID, expire, secretKey)
+func newSession(from string, srcID, managerID, userID int, expireSeconds int64, secretKey string) (string, error) {
+	signature, err := newSignature(from, srcID, managerID, userID, expireSeconds, secretKey)
 	if err != nil {
 		return "", fmt.Errorf("newSignature error %v", err)
 	}
@@ -96,7 +94,7 @@ func newSession(from string, srcID, managerID, userID int, expire time.Time, sec
 		SrcID:     srcID,
 		ManagerID: managerID,
 		UserID:    userID,
-		Expire:    expire.Format(ConstTimeFormat),
+		Expire:    strconv.FormatInt(expireSeconds, 10),
 		Signature: signature,
 	})
 	if err != nil {
@@ -105,14 +103,14 @@ func newSession(from string, srcID, managerID, userID int, expire time.Time, sec
 	return base64.URLEncoding.EncodeToString(data), nil
 }
 
-func newSignature(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
+func newSignature(from string, srcID, managerID, userID int, expireSeconds int64, secretKey string) (string, error) {
 	switch from {
 	case ConstFromA, ConstFromB, ConstFromC:
 	default:
 		return "", fmt.Errorf("newSignature unknown from %s", from)
 	}
 
-	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + expire.Format(ConstTimeFormat) + secretKey
+	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + strconv.FormatInt(expireSeconds, 10) + secretKey
 	sha1er := sha1.New()
 	io.WriteString(sha1er, source)
 	return fmt.Sprintf("%x", sha1er.Sum(nil)), nil
