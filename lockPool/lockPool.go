@@ -63,5 +63,11 @@ func (lp *LockPool) Lock(unique interface{}) {
 }
 
 func (lp *LockPool) Unlock(unique interface{}) {
-	lp.conn.Cmd("DECR", lp.key(unique))
+	exist, err := lp.conn.Cmd("DECR", lp.key(unique)).Int()
+	if err != nil {
+		return
+	}
+	if exist <= 0 {
+		lp.conn.Cmd("DEL", lp.key(unique))
+	}
 }
