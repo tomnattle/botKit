@@ -3,6 +3,8 @@ package lockPool
 import (
 	"fmt"
 	"github.com/ifchange/botKit/Redis"
+	"github.com/ifchange/botKit/logger"
+	"github.com/ifchange/botKit/util"
 	"time"
 )
 
@@ -33,8 +35,9 @@ func NewWithConfig(prefix string, size int, expire time.Duration) (*LockPool, er
 	if err != nil {
 		return nil, fmt.Errorf("Init lock pool error Redis error %v", err)
 	}
+	seed := util.RandStr(15)
 	return &LockPool{
-		key:    func(unique interface{}) string { return Redis.FormatKey(fmt.Sprintf("%s-%v", prefix, unique)) },
+		key:    func(unique interface{}) string { return Redis.FormatKey(fmt.Sprintf("%s_%s_%v", prefix, seed, unique)) },
 		size:   size,
 		expire: expire,
 		conn:   conn,
@@ -70,4 +73,14 @@ func (lp *LockPool) Unlock(unique interface{}) {
 	if exist <= 0 {
 		lp.conn.Cmd("DEL", lp.key(unique))
 	}
+}
+
+func (lp *LockPool) Status(unique interface{}) (exist int) {
+	exist, err := lp.conn.Cmd("GET", lp.key(unique)).Int()
+	if err != nil {
+		logger.Printf("lockPool ins %v get status error %v",
+			lp, err)
+		return 0
+	}
+	return
 }
