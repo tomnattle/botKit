@@ -41,7 +41,7 @@ func New() *Server {
 
 	// middleware
 	e.Use(middleware.Recover())
-	e.Use(middleware.BodyLimit("2M"))
+	e.Use(middleware.BodyLimit("5M"))
 	// common error handler
 	e.HTTPErrorHandler = commonHTTP.ErrHandler
 
