@@ -25,6 +25,7 @@ type Config struct {
 	SMS             *SMSConfig    `toml:"SMS"`
 	URI             *URIConfig    `toml:"URI"`
 	Dfs             *DfsConfig    `toml:"Dfs"`
+	AITS            *AITSConfig   `toml:"AITS"`
 }
 
 type DfsConfig struct {
@@ -65,6 +66,10 @@ type URIConfig struct {
 	Admin     string `toml:"Admin"`
 	Dashboard string `toml:"Dashboard"`
 	Center    string `toml:"Center"`
+}
+
+type AITSConfig struct {
+	URL string `toml:"URL"`
 }
 
 func init() {
