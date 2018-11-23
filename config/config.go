@@ -64,6 +64,7 @@ type URIConfig struct {
 	Tsketch   string `toml:"Tsketch"`
 	Admin     string `toml:"Admin"`
 	Dashboard string `toml:"Dashboard"`
+	Center    string `toml:"Center"`
 }
 
 func init() {
