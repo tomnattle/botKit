@@ -17,7 +17,7 @@ func init() {
 	if cfg == nil {
 		panic("Dfs config is nil")
 	}
-	req.H = &commonHTTP.Header{
+	req.H = commonHTTP.Header{
 		AppID:    config.GetConfig().AppID,
 		LogID:    config.GetConfig().Environment,
 		Provider: config.GetConfig().AppName,
