@@ -28,13 +28,11 @@ func init() {
 func getURI(productID int) (uri string, err error) {
 	switch productID {
 	case 1:
-		uri = cfg.ChatBot
+		uri = cfg.Interview
 	case 3:
 		uri = cfg.WinMode
 	case 4:
 		uri = cfg.Tsketch
-	case 9:
-		uri = cfg.Interview
 	default:
 		err = fmt.Errorf("botKit products error productID:%d is not defind",
 			productID)

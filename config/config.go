@@ -60,7 +60,6 @@ type SMSConfig struct {
 }
 
 type URIConfig struct {
-	ChatBot   string `toml:"ChatBot"`
 	WinMode   string `toml:"WinMode"`
 	Tsketch   string `toml:"Tsketch"`
 	Admin     string `toml:"Admin"`
