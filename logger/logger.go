@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+func Debugf(format string, v ...interface{}) {
+	if config.GetConfig().Environment == "prod" {
+		return
+	}
+	writer.Write(bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf(format, v...))).Bytes())
+}
+
 func Printf(format string, v ...interface{}) {
 	writer.Write(bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf(format, v...))).Bytes())
 }
