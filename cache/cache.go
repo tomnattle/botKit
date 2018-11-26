@@ -1,51 +1,98 @@
+/*
+achieve stupid memory cache
+lazy release big map-cap per day
+
+// init
+myCache := cache.New()
+
+// set
+var value1 TYPE
+myCache.Set("key1", value1, time.Duration(1)*time.Second)
+
+// get
+value1, ok := myCache.Get("key1").(TYPE)
+if !ok {
+	// cache not exist
+}
+
+// delete key (always safe)
+myCache.Del("key1")
+*/
 package cache
 
-// import (
-// 	"fmt"
-// 	"sync"
-// 	"time"
-// )
+import (
+	"sync"
+	"time"
+)
 
-// type CacheType uint8
+type Cache struct {
+	storage  map[string]*item
+	released time.Time
+	lock     *sync.Mutex
+}
 
-// const (
-// 	_ CacheType = iota
-// 	MemoryCache
-// 	RedisCache
-// )
+type item struct {
+	value  interface{}
+	expire time.Time
+}
 
-// type Cache struct {
-// 	cacheSaver saver
-// 	created    time.Time
-// 	lock       *sync.Mutex
-// }
+func New() (*Cache, error) {
+	return &Cache{
+		storage:  make(map[string]*item),
+		released: time.Now(),
+		lock:     new(sync.Mutex),
+	}, nil
+}
 
-// type saver interface {
-// 	get(string) interface{}
-// 	set(string, interface{}, time.Duration)
-// 	release(string)
-// 	releaseAll()
-// }
+func (ins *Cache) Get(key string) interface{} {
+	now := time.Now()
+	ins.lock.Lock()
+	defer ins.lock.Unlock()
+	defer ins.releseCap(now)
 
-// func New(t CacheType) (*Cache, error) {
-// 	if t == MemoryCache {
+	value, ok := ins.storage[key]
+	if !ok {
+		return nil
+	}
+	if value.expire.Before(now) {
+		return nil
+	}
+	return value.value
+}
 
-// 	}
-// }
+func (ins *Cache) Set(key string, value interface{}, expire time.Duration) {
+	now := time.Now()
+	ins.lock.Lock()
+	defer ins.lock.Unlock()
+	defer ins.releseCap(now)
 
-// func (ins *Cache) Get(key string) interface{} {
+	ins.storage[key] = &item{
+		value:  value,
+		expire: now.Add(expire),
+	}
+}
 
-// }
+func (ins *Cache) Del(key string) {
+	now := time.Now()
+	ins.lock.Lock()
+	defer ins.lock.Unlock()
+	defer ins.releseCap(now)
 
-// func (ins *Cache) Set(key string, value interface{}, expire time.Duration) {
+	delete(ins.storage, key)
+}
 
-// }
-
-// func (ins *Cache) Del(key string) {
-
-// }
-
-// type item struct {
-// 	value  interface{}
-// 	expire time.Time
-// }
+// MUST handle in lock
+func (ins *Cache) releseCap(now time.Time) {
+	if now.Sub(ins.released) < time.Duration(24)*time.Hour {
+		return
+	}
+	storage := make(map[string]*item)
+	for key, value := range ins.storage {
+		if value.expire.Before(now) {
+			continue
+		}
+		storage[key] = value
+	}
+	ins.storage = storage
+	ins.released = now
+}
