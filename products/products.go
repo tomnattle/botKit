@@ -33,6 +33,8 @@ func getURI(productID int) (uri string, err error) {
 		uri = cfg.WinMode
 	case 4:
 		uri = cfg.Tsketch
+	case 9:
+		uri = cfg.Interview
 	default:
 		err = fmt.Errorf("botKit products error productID:%d is not defind",
 			productID)
