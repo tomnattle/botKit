@@ -16,7 +16,7 @@ func Debugf(format string, v ...interface{}) {
 	if config.GetConfig().Environment == "prod" {
 		return
 	}
-	writer.Write(bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf(format, v...))).Bytes())
+	writer.Write(bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf("[DEBUG]"+format, v...))).Bytes())
 }
 
 func Printf(format string, v ...interface{}) {
