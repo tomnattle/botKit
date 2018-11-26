@@ -6,15 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
 	"time"
 )
 
 const (
-	ConstTimeFormat = "20060102150405"
-	ConstFromA      = "A"
-	ConstFromB      = "B"
-	ConstFromC      = "C"
+	ConstFromA = "A"
+	ConstFromB = "B"
+	ConstFromC = "C"
 
 	constMaxDuration = time.Duration(7*24) * time.Hour
 )
@@ -24,7 +22,7 @@ type Session struct {
 	SrcID     int    `json:"src_id"`
 	ManagerID int    `json:"manager_id"`
 	UserID    int    `json:"user_id"`
-	Expire    string `json:"expire"`
+	Expire    int    `json:"expire"`
 	Signature string `json:"signature"`
 }
 
@@ -34,7 +32,7 @@ func GenerateSession(from string, srcID, managerID, userID int, duration time.Du
 		return "", fmt.Errorf("GenerateSession error out of max expire:%v want:%v",
 			constMaxDuration, duration)
 	}
-	expire := time.Now().UTC().Add(duration)
+	expire := time.Now().Unix() + int64(duration.Seconds())
 	secretKey, err := getSecretKey(srcID, managerID)
 	if err != nil {
 		return "", fmt.Errorf("GenerateSession from:%s srcID:%d managerID:%d userID:%d getSecretKey error %v",
@@ -57,25 +55,20 @@ func VerifySession(from string, session string,
 	if from != s.From {
 		return nil, fmt.Errorf("VerifySession diff from %s:%s", from, s.From)
 	}
-	expireTime, err := time.Parse(ConstTimeFormat, s.Expire)
-	if err != nil {
-		return nil, fmt.Errorf("VerifySession parse expire %v error %v", s.Expire, err)
-	}
-	expireTime = expireTime.UTC()
-	now := time.Now().UTC()
-	if expireTime.Before(now) {
+	now := time.Now().Unix()
+	if now > int64(s.Expire) {
 		return nil, fmt.Errorf("VerifySession session is timeout")
 	}
-	if expireTime.Sub(now) > constMaxDuration {
+	if int64(s.Expire)-now > int64(constMaxDuration.Seconds()) {
 		return nil, fmt.Errorf("VerifySession error out of max expire %v",
-			expireTime)
+			s.Expire)
 	}
 	secretKey, err := getSecretKey(s.SrcID, s.ManagerID)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d getSecretKey error %v",
 			s.SrcID, s.ManagerID, s.UserID, err)
 	}
-	newSignature, err := newSignature(s.From, s.SrcID, s.ManagerID, s.UserID, expireTime, secretKey)
+	newSignature, err := newSignature(s.From, s.SrcID, s.ManagerID, s.UserID, int64(s.Expire), secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("VerifySession srcID:%d managerID:%d userID:%d NewSignature error %v",
 			s.SrcID, s.ManagerID, s.UserID, err)
@@ -86,8 +79,8 @@ func VerifySession(from string, session string,
 	return s, nil
 }
 
-func newSession(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
-	signature, err := newSignature(from, srcID, managerID, userID, expire, secretKey)
+func newSession(from string, srcID, managerID, userID int, expireSeconds int64, secretKey string) (string, error) {
+	signature, err := newSignature(from, srcID, managerID, userID, expireSeconds, secretKey)
 	if err != nil {
 		return "", fmt.Errorf("newSignature error %v", err)
 	}
@@ -96,7 +89,7 @@ func newSession(from string, srcID, managerID, userID int, expire time.Time, sec
 		SrcID:     srcID,
 		ManagerID: managerID,
 		UserID:    userID,
-		Expire:    expire.Format(ConstTimeFormat),
+		Expire:    int(expireSeconds),
 		Signature: signature,
 	})
 	if err != nil {
@@ -105,14 +98,14 @@ func newSession(from string, srcID, managerID, userID int, expire time.Time, sec
 	return base64.URLEncoding.EncodeToString(data), nil
 }
 
-func newSignature(from string, srcID, managerID, userID int, expire time.Time, secretKey string) (string, error) {
+func newSignature(from string, srcID, managerID, userID int, expireSeconds int64, secretKey string) (string, error) {
 	switch from {
 	case ConstFromA, ConstFromB, ConstFromC:
 	default:
 		return "", fmt.Errorf("newSignature unknown from %s", from)
 	}
 
-	source := from + strconv.Itoa(srcID) + strconv.Itoa(managerID) + strconv.Itoa(userID) + expire.Format(ConstTimeFormat) + secretKey
+	source := fmt.Sprintf("%s%d%d%d%d%s", from, srcID, managerID, userID, expireSeconds, secretKey)
 	sha1er := sha1.New()
 	io.WriteString(sha1er, source)
 	return fmt.Sprintf("%x", sha1er.Sum(nil)), nil
