@@ -1,29 +1,22 @@
 package dfs
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/hsyan2008/hfw2/curl"
 	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
+	"io/ioutil"
+	"net/http"
 )
 
 var cfg *config.DfsConfig
-var req commonHTTP.Request
 
 func init() {
 	cfg = config.GetConfig().Dfs
 	if cfg == nil {
 		panic("Dfs config is nil")
 	}
-	req.H = commonHTTP.Header{
-		AppID:    config.GetConfig().AppID,
-		LogID:    config.GetConfig().Environment,
-		Provider: config.GetConfig().AppName,
-	}
-
-	req.R.C = "Dfs"
 }
 
 type Response struct {
@@ -50,30 +43,39 @@ func Read(r ReadRequest) (*Response, error) {
 		return nil, fmt.Errorf("params error")
 	}
 
-	req.R.M = "download"
-	req.R.P = r
+	req := &ReadRequest{}
+	reqBody := commonHTTP.MakeReq(&req)
 
-	post, err := json.Marshal(req)
+	reqBody.R.C = "Dfs"
+	reqBody.R.M = "download"
+	reqBody.R.P = r
+
+	post, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("json marshal error")
 	}
 
-	result := &Result{}
 	for i := 1; i <= 3; i++ {
-		c := curl.NewCurl(cfg.Server)
-		c.PostBytes = post
-		resp, err := c.Request(context.Background())
+		request, err := http.NewRequest("POST", cfg.Server, bytes.NewBuffer(post))
 		if err != nil {
 			continue
 		}
-
-		if resp.Headers["Status-Code"] != "200" {
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			continue
+		}
+		if response.StatusCode != 200 {
 			continue
 		}
 
-		err = json.Unmarshal(resp.Body, result)
+		data, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			continue
+			return nil, err
+		}
+		result := Result{}
+		err = json.Unmarshal(data, &result)
+		if err != nil {
+			return nil, err
 		}
 
 		if result.Response.ErrMsg != "" {
@@ -104,30 +106,39 @@ func Write(w UploadRequest) (*Response, error) {
 		w.Ext = "txt"
 	}
 
-	req.R.M = "upload"
-	req.R.P = w
+	req := &ReadRequest{}
+	reqBody := commonHTTP.MakeReq(&req)
 
-	post, err := json.Marshal(req)
+	reqBody.R.C = "Dfs"
+	reqBody.R.M = "upload"
+	reqBody.R.P = w
+
+	post, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("json marshal error")
 	}
 
-	result := &Result{}
 	for i := 1; i <= 3; i++ {
-		c := curl.NewCurl(cfg.Server)
-		c.PostBytes = post
-		resp, err := c.Request(context.Background())
+		request, err := http.NewRequest("POST", cfg.Server, bytes.NewBuffer(post))
 		if err != nil {
 			continue
 		}
-
-		if resp.Headers["Status-Code"] != "200" {
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			continue
+		}
+		if response.StatusCode != 200 {
 			continue
 		}
 
-		err = json.Unmarshal(resp.Body, result)
+		data, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			continue
+			return nil, err
+		}
+		result := Result{}
+		err = json.Unmarshal(data, &result)
+		if err != nil {
+			return nil, err
 		}
 
 		if result.Response.ErrMsg != "" {
@@ -139,40 +150,43 @@ func Write(w UploadRequest) (*Response, error) {
 	return nil, fmt.Errorf("upload error")
 }
 
-type DelRequest struct {
-	GroupName string `json:"groupname"`
-	FileName  string `json:"filename"`
-}
-
 func Del(d ReadRequest) (bool, error) {
 	if d.GroupName == "" || d.FileName == "" {
 		return false, fmt.Errorf("params error")
 	}
+	req := &ReadRequest{}
+	reqBody := commonHTTP.MakeReq(&req)
 
-	req.R.M = "del"
-	req.R.P = d
+	reqBody.R.C = "Dfs"
+	reqBody.R.M = "del"
+	reqBody.R.P = d
 
-	post, err := json.Marshal(req)
+	post, err := json.Marshal(reqBody)
 	if err != nil {
 		return false, fmt.Errorf("json marshal error")
 	}
 
-	result := &Result{}
 	for i := 1; i <= 3; i++ {
-		c := curl.NewCurl(cfg.Server)
-		c.PostBytes = post
-		resp, err := c.Request(context.Background())
+		request, err := http.NewRequest("POST", cfg.Server, bytes.NewBuffer(post))
 		if err != nil {
 			continue
 		}
-
-		if resp.Headers["Status-Code"] != "200" {
+		response, err := http.DefaultClient.Do(request)
+		if err != nil {
+			continue
+		}
+		if response.StatusCode != 200 {
 			continue
 		}
 
-		err = json.Unmarshal(resp.Body, result)
+		data, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			continue
+			return false, err
+		}
+		result := Result{}
+		err = json.Unmarshal(data, &result)
+		if err != nil {
+			return false, err
 		}
 
 		if result.Response.ErrMsg != "" {
