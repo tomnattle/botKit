@@ -104,7 +104,8 @@ func (ins *Logger) fileCheck(now time.Time) {
 		ins.fileName = ins.sourceFileName + ins.timestamp.Format("_2006_01_02")
 	}
 
-	if ins.file == nil || ins.file.Sync() != nil {
+	if _, err := os.Stat(ins.fileName); err != nil || os.IsNotExist(err) ||
+		ins.file == nil || ins.file.Sync() != nil {
 		ins.newLogFile()
 	}
 
