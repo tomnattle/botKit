@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ifchange/botKit/Redis"
 	"github.com/ifchange/botKit/admin"
 	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
@@ -77,6 +76,16 @@ func getProductInfo(productID int) (name string, desc string, sort int, err erro
 type Product struct {
 	ID        int       `json:"product_id"`
 	Name      string    `json:"product_name"`
+	Desc      string    `json:"desc"`
+	Sort      int       `json:"sort"`
+	IsDeleted int       `json:"is_deleted"`
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type product struct {
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
 	Desc      string    `json:"desc"`
 	Sort      int       `json:"sort"`
 	IsDeleted int       `json:"is_deleted"`
@@ -166,7 +175,7 @@ func getProductsFromAdmin() ([]*Product, error) {
 	}
 	var reply = &struct {
 		Total    int        `json:"total"`
-		Products []*Product `json:"results"`
+		Products []*product `json:"results"`
 	}{}
 	err = commonHTTP.GetRsp(rsp.Body, &reply)
 	if err != nil {
@@ -174,7 +183,22 @@ func getProductsFromAdmin() ([]*Product, error) {
 		return nil, err
 	}
 
-	return reply.Products, nil
+	prods := make([]*Product, 0)
+	for _, p := range reply.Products {
+		prod := &Product{
+			ID:        p.ID,
+			Name:      p.Name,
+			Desc:      p.Desc,
+			Sort:      p.Sort,
+			IsDeleted: p.IsDeleted,
+			UpdatedAt: p.UpdatedAt,
+			CreatedAt: p.CreatedAt,
+		}
+
+		prods = append(prods, prod)
+	}
+
+	return prods, nil
 }
 
 type ProductState struct {
@@ -213,13 +237,11 @@ func GetProductStateByManagerID(id int) ([]*ProductState, error) {
 }
 
 func getProductStateByManagerID(id int) ([]*ProductState, error) {
-	conn, err := Redis.GetRedis()
-	if err == nil {
-		pss, exist := getProductStateCache(conn, id)
-		if exist {
-			return pss, nil
-		}
+	pss, exist := getProductStateCache(id)
+	if exist {
+		return pss, nil
 	}
+
 	body, err := json.Marshal(commonHTTP.MakeReq(&struct {
 		CompanyID int `json:"company_id"`
 	}{id}))
@@ -248,7 +270,7 @@ func getProductStateByManagerID(id int) ([]*ProductState, error) {
 		s.parse()
 	}
 
-	saveProductStateCache(conn, id, states)
+	saveProductStateCache(id, states)
 
 	return states, nil
 }
