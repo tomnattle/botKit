@@ -75,8 +75,8 @@ func getProductInfo(productID int) (name string, desc string, sort int, err erro
 }
 
 type Product struct {
-	ID        int       `json:"product_id"`
-	Name      string    `json:"product_name"`
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
 	Desc      string    `json:"desc"`
 	Sort      int       `json:"sort"`
 	IsDeleted int       `json:"is_deleted"`
