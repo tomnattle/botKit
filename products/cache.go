@@ -1,45 +1,36 @@
 package products
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/ifchange/botKit/Redis"
-	"github.com/ifchange/botKit/logger"
+	"github.com/ifchange/botKit/cache"
+	"time"
 )
 
-const (
-	ttl = 30
+var (
+	productStateCache *cache.Cache
+	cacheTTL          = time.Duration(30) * time.Second
 )
+
+func init() {
+	var err error
+	productStateCache, err = cache.New()
+	if err != nil {
+		panic(err)
+	}
+}
 
 func key(managerID int) string {
-	return Redis.FormatKey(fmt.Sprintf("manager-products-stat e-cache-%d", managerID))
+	return fmt.Sprintf("manager-products-state-cache-%d", managerID)
 }
 
-func getProductStateCache(conn *Redis.RedisCommon, id int) ([]*ProductState, bool) {
-	data, err := conn.Cmd("GET", key(id)).Bytes()
-	if err != nil {
-		logger.Printf("manager products try exec redis query error %v", err)
+func getProductStateCache(id int) ([]*ProductState, bool) {
+	pps, ok := productStateCache.Get(key(id)).([]*ProductState)
+	if !ok {
 		return nil, false
 	}
-
-	pss := make([]*ProductState, 0)
-	err = json.Unmarshal(data, &pss)
-	if err != nil {
-		logger.Printf("manager products try exec redis query error %v", err)
-		return nil, false
-	}
-	return pss, true
+	return pps, true
 }
 
-func saveProductStateCache(conn *Redis.RedisCommon, id int, pss []*ProductState) {
-	data, err := json.Marshal(pss)
-	if err != nil {
-		return
-	}
-
-	err = conn.Cmd("SETEX", key(id), ttl, data).Err
-	if err != nil {
-		logger.Printf("manager products try exec redis save error %v", err)
-		return
-	}
+func saveProductStateCache(id int, pss []*ProductState) {
+	productStateCache.Set(key(id), pss, cacheTTL)
 }
