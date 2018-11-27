@@ -1,9 +1,10 @@
 /*
-	achieve deep copy by marshal/unmarshal
+	Achieve deep copy by marshal/unmarshal
 
 	Warning:
-		if the type of value is struct,
-		only exported filedes will be deep copy
+		If the type of value is struct,
+		only exported filedes will be copied,
+		private filedes will keep their zero values.
 */
 package util
 
