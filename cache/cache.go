@@ -28,7 +28,7 @@ import (
 type Cache struct {
 	storage  map[string]*item
 	released time.Time
-	lock     *sync.Mutex
+	lock     *sync.RWMutex
 }
 
 type item struct {
@@ -40,21 +40,19 @@ func New() (*Cache, error) {
 	return &Cache{
 		storage:  make(map[string]*item),
 		released: time.Now(),
-		lock:     new(sync.Mutex),
+		lock:     new(sync.RWMutex),
 	}, nil
 }
 
 func (ins *Cache) Get(key string) interface{} {
-	now := time.Now()
-	ins.lock.Lock()
-	defer ins.lock.Unlock()
-	defer ins.releseCap(now)
+	ins.lock.RLock()
+	defer ins.lock.RUnlock()
 
 	value, ok := ins.storage[key]
 	if !ok {
 		return nil
 	}
-	if value.expire.Before(now) {
+	if value.expire.Before(time.Now()) {
 		return nil
 	}
 	return value.value
@@ -73,10 +71,9 @@ func (ins *Cache) Set(key string, value interface{}, expire time.Duration) {
 }
 
 func (ins *Cache) Del(key string) {
-	now := time.Now()
 	ins.lock.Lock()
 	defer ins.lock.Unlock()
-	defer ins.releseCap(now)
+	defer ins.releseCap(time.Now())
 
 	delete(ins.storage, key)
 }
