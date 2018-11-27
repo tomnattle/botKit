@@ -1,5 +1,5 @@
 /*
-achieve stupid memory cache
+achieve stupid time-based memory cache
 lazy release big map-cap per day
 
 // init
