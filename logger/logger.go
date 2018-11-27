@@ -13,10 +13,25 @@ import (
 )
 
 func Debugf(format string, v ...interface{}) {
-	if config.GetConfig().Environment == "prod" {
+	if constEnvironment == "prod" || constEnvironment == "test" {
 		return
 	}
-	writer.Write(bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf("[DEBUG]"+format, v...))).Bytes())
+	Printf("[DEBUG]"+format, v...)
+}
+
+func Infof(format string, v ...interface{}) {
+	if constEnvironment == "prod" {
+		return
+	}
+	Printf("[INFO]"+format, v...)
+}
+
+func Warnf(format string, v ...interface{}) {
+	Printf("[WARN]"+format, v...)
+}
+
+func Errorf(format string, v ...interface{}) {
+	Printf("[ERROR]"+format, v...)
 }
 
 func Printf(format string, v ...interface{}) {
@@ -24,7 +39,8 @@ func Printf(format string, v ...interface{}) {
 }
 
 var (
-	writer *Logger
+	writer           *Logger
+	constEnvironment string
 )
 
 func init() {
@@ -32,6 +48,8 @@ func init() {
 	if cfg == nil {
 		panic("logger config is nil")
 	}
+
+	constEnvironment = config.GetConfig().Environment
 
 	now := time.Now()
 
