@@ -51,10 +51,10 @@ func (ins *Response) Errorf(err error, errCode int, msg ...string) error {
 		logMsg += strings.Join(msg, " ")
 	}
 
-	return &errCommon{
-		errCode: errCode,
-		errMsg:  errMsg,
-		logMsg:  logMsg,
+	return &ErrCommon{
+		ErrCode: errCode,
+		ErrMsg:  errMsg,
+		LogMsg:  logMsg,
 	}
 }
 
@@ -63,17 +63,17 @@ type errConfig struct {
 	msg  string
 }
 
-type errCommon struct {
-	errCode int
-	errMsg  string
-	logMsg  string
+type ErrCommon struct {
+	ErrCode int
+	ErrMsg  string
+	LogMsg  string
 }
 
-func (err *errCommon) Error() string {
+func (err *ErrCommon) Error() string {
 	if err == nil {
 		return "nil errCommon in errHandler package"
 	}
-	return err.errMsg
+	return err.ErrMsg
 }
 
 func ErrHandler(err error, c echo.Context) {
@@ -83,16 +83,16 @@ func ErrHandler(err error, c echo.Context) {
 		logMsg = ""
 	)
 
-	if errC, ok := err.(*errCommon); ok {
+	if errC, ok := err.(*ErrCommon); ok {
 		switch config.GetConfig().Environment {
 		case "dev":
-			rsp.R.ErrNo = errC.errCode
-			rsp.R.ErrMsg = errC.errMsg + errC.logMsg
-			logMsg = errC.logMsg
+			rsp.R.ErrNo = errC.ErrCode
+			rsp.R.ErrMsg = errC.ErrMsg + errC.LogMsg
+			logMsg = errC.LogMsg
 		default:
-			rsp.R.ErrNo = errC.errCode
-			rsp.R.ErrMsg = errC.errMsg
-			logMsg = errC.logMsg
+			rsp.R.ErrNo = errC.ErrCode
+			rsp.R.ErrMsg = errC.ErrMsg
+			logMsg = errC.LogMsg
 		}
 	} else {
 		rsp.R.ErrNo = -1
