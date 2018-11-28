@@ -26,9 +26,9 @@ import (
 )
 
 type Cache struct {
-	storage  map[string]*item
-	released time.Time
-	lock     *sync.RWMutex
+	storage     *sync.Map
+	released    time.Time
+	releaseLock *sync.Mutex
 }
 
 type item struct {
@@ -38,58 +38,67 @@ type item struct {
 
 func New() (*Cache, error) {
 	return &Cache{
-		storage:  make(map[string]*item),
-		released: time.Now(),
-		lock:     new(sync.RWMutex),
+		storage:     new(sync.Map),
+		released:    time.Now(),
+		releaseLock: new(sync.Mutex),
 	}, nil
 }
 
-func (ins *Cache) Get(key string) interface{} {
-	ins.lock.RLock()
-	defer ins.lock.RUnlock()
-
-	value, ok := ins.storage[key]
+func (ins *Cache) Get(key interface{}) interface{} {
+	value, ok := ins.storage.Load(key)
 	if !ok {
 		return nil
 	}
-	if value.expire.Before(time.Now()) {
+	i, ok := value.(*item)
+	if !ok {
 		return nil
 	}
-	return value.value
+	if i.expire.Before(time.Now()) {
+		return nil
+	}
+	return i.value
 }
 
-func (ins *Cache) Set(key string, value interface{}, expire time.Duration) {
+func (ins *Cache) Set(key interface{}, value interface{}, expire time.Duration) {
 	now := time.Now()
-	ins.lock.Lock()
-	defer ins.lock.Unlock()
+	ins.releaseLock.Lock()
+	defer ins.releaseLock.Unlock()
 	defer ins.releseCap(now)
 
-	ins.storage[key] = &item{
+	ins.storage.Store(key, &item{
 		value:  value,
 		expire: now.Add(expire),
-	}
+	})
 }
 
-func (ins *Cache) Del(key string) {
-	ins.lock.Lock()
-	defer ins.lock.Unlock()
+func (ins *Cache) Del(key interface{}) {
+	ins.releaseLock.Lock()
+	defer ins.releaseLock.Unlock()
 	defer ins.releseCap(time.Now())
 
-	delete(ins.storage, key)
+	ins.storage.Delete(key)
 }
 
-// MUST handle in lock
+// MUST handle in releaseLock
 func (ins *Cache) releseCap(now time.Time) {
 	if now.Sub(ins.released) < time.Duration(24)*time.Hour {
 		return
 	}
-	storage := make(map[string]*item)
-	for key, value := range ins.storage {
-		if value.expire.Before(now) {
-			continue
+	storage := new(sync.Map)
+	scanAll :=
+		func(key, value interface{}) (continueIteration bool) {
+			continueIteration = true
+			i, ok := value.(*item)
+			if !ok {
+				return
+			}
+			if i.expire.Before(now) {
+				return
+			}
+			storage.Store(key, value)
+			return
 		}
-		storage[key] = value
-	}
+	ins.storage.Range(scanAll)
 	ins.storage = storage
 	ins.released = now
 }
