@@ -35,11 +35,11 @@ func Errorf(format string, v ...interface{}) {
 }
 
 func Printf(format string, v ...interface{}) {
-	writer.Write(
-		bytes.NewBufferString(
-			fmt.Sprintln(
-				fmt.Sprintf(" Time:%s ", time.Now()),
-				fmt.Sprintf(format, v...))).Bytes()[:1000])
+	logBinary := bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf(" Time:%s ", time.Now()), fmt.Sprintf(format, v...))).Bytes()
+	if len(logBinary) > 1000 {
+		logBinary = logBinary[:1000]
+	}
+	writer.Write(logBinary)
 }
 
 var (
