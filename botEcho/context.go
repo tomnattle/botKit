@@ -98,8 +98,12 @@ func (c Context) Logger() *Logger {
 	return c.logger
 }
 
-func (c Context) Request() *http.Request {
-	return c.request
+func (c Context) GetReq(usefulRequestPointer interface{}) error {
+	err = json.Unmarshal(c.P, usefulRequestPointer)
+	if err != nil {
+		return fmt.Errorf("json unmarshal error %v %v", err, usefulRequestPointer)
+	}
+	return nil
 }
 
 func (c Context) JSON(response interface{}) error {
