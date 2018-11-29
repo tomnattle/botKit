@@ -17,7 +17,7 @@ type Context struct {
 	echo.Context
 	// link to http request and response
 	request  *http.Request
-	response interface{}
+	response *interface{}
 	// log in each request
 	logger *Logger
 	// common request
@@ -33,6 +33,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 		// make context
 		c := Context{Context: echoC}
 		c.request = echoC.Request()
+		c.response = new(interface{})
 		// unmarshal
 		reply := commonHTTP.MakeRsp(nil)
 		requestBody, err := ioutil.ReadAll(c.request.Body)
@@ -84,7 +85,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 			errHandler(err, c)
 			return nil
 		}
-		response, err := json.Marshal(c.response)
+		response, err := json.Marshal(*c.response)
 		if err != nil {
 			c.Logger().Infof("response info unknown response %v", c.response)
 			return nil
@@ -110,7 +111,7 @@ func (c Context) GetReq(usefulRequestPointer interface{}) error {
 }
 
 func (c Context) JSON(response interface{}) error {
-	c.response = response
+	c.response = &response
 	return c.Context.JSON(http.StatusOK, response)
 }
 
