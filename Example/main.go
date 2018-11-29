@@ -13,7 +13,6 @@ func main() {
 
 func index(c botEcho.Context) error {
 	rsp := commonHTTP.MakeRsp(nil)
-	panic(12)
 	c.Logger().Debugf("Fi")
 	return c.JSON(rsp)
 }
