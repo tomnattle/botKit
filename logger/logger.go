@@ -35,7 +35,11 @@ func Errorf(format string, v ...interface{}) {
 }
 
 func Printf(format string, v ...interface{}) {
-	writer.Write(bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf(format, v...))).Bytes())
+	writer.Write(
+		bytes.NewBufferString(
+			fmt.Sprintln(
+				fmt.Sprintf(" Time:%s ", time.Now()),
+				fmt.Sprintf(format, v...))).Bytes()[:1000])
 }
 
 var (

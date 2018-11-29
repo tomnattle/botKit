@@ -14,8 +14,9 @@ import (
 type Context struct {
 	// inside echo context
 	echo.Context
-	// link to http request
-	request *http.Request
+	// link to http request and response
+	request  *http.Request
+	response interface{}
 	// log in each request
 	logger *Logger
 	// common request
@@ -33,7 +34,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 		c.request = echoC.Request()
 		// unmarshal
 		reply := commonHTTP.MakeRsp(nil)
-		body, err := ioutil.ReadAll(c.request.Body)
+		requestBody, err := ioutil.ReadAll(c.request.Body)
 		if err != nil {
 			return reply.Errorf(
 				fmt.Errorf("common handler read request body error %v", err),
@@ -48,7 +49,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 				P *json.RawMessage `json:"p"`
 			} `json:"request"`
 		}{}
-		err = json.Unmarshal(body, commonRequest)
+		err = json.Unmarshal(requestBody, commonRequest)
 		if err != nil {
 			return reply.Errorf(
 				fmt.Errorf("common handler unmarshal request body error %v", err),
@@ -70,13 +71,21 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 				}
 				stack := make([]byte, 4<<10)
 				length := runtime.Stack(stack, true)
-				c.Logger().Printf("[PANIC RECOVER] %v %s", err, stack[:length])
+				c.Logger().Errorf("[PANIC RECOVER] %v %s", err, stack[:length])
 			}
 		}()
 
+		c.Logger().Infof("request info %s", string(requestBody))
 		if err := h(c); err != nil {
 			errHandler(err, c)
+			return nil
 		}
+		response, err := json.Marshal(c.response)
+		if err != nil {
+			c.Logger().Infof("response info unknown response %v", c.response)
+			return nil
+		}
+		c.Logger().Infof("response info %s", string(response))
 		return nil
 	}
 }
@@ -87,6 +96,11 @@ func (c Context) Logger() *Logger {
 
 func (c Context) Request() *http.Request {
 	return c.request
+}
+
+func (c Context) JSON(response interface{}) error {
+	c.response = response
+	return c.Context.JSON(http.StatusOK, response)
 }
 
 func errHandler(err error, c Context) {
@@ -120,7 +134,7 @@ func errHandler(err error, c Context) {
 		if c.Request().Method == echo.HEAD { // echo Issue #608
 			err = c.NoContent(code)
 		} else {
-			err = c.JSON(code, rsp)
+			err = c.Context.JSON(code, rsp)
 		}
 		if err != nil {
 			c.Logger().Errorf("errHandler %v", err)

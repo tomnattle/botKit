@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"github.com/ifchange/botKit/logger"
 	"net/http"
-	"time"
 )
 
 const (
-	format = "Time:%s LogID:%s Path:%s RemoteIP:%s Info:%v"
+	format = "LogID:%s Path:%s RemoteIP:%s Info:%v"
 )
 
 type Logger struct {
@@ -18,7 +17,7 @@ type Logger struct {
 func newLogger(logID string, req *http.Request) *Logger {
 	return &Logger{
 		format: func(info string) string {
-			commonLog := fmt.Sprintf(format, time.Now(), logID, req.RequestURI, req.RemoteAddr, info)
+			commonLog := fmt.Sprintf(format, logID, req.RequestURI, req.RemoteAddr, info)
 			return commonLog
 		},
 	}
