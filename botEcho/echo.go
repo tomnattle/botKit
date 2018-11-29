@@ -3,8 +3,8 @@ package botEcho
 import (
 	"fmt"
 	"github.com/ifchange/botKit/botEcho/grace"
-	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
+	"github.com/ifchange/botKit/logger"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -26,10 +26,9 @@ func New() *Server {
 		appName, cfg.Addr)
 	// init service
 	e := &Server{Echo: echo.New()}
+	e.Logger.SetOutput(logger.GetOutput())
 	// middleware
 	e.Use(middleware.BodyLimit("5M"))
-	// common error handler
-	e.HTTPErrorHandler = commonHTTP.ErrHandler
 
 	e.Server.Addr = cfg.Addr
 	return e

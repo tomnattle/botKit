@@ -3,8 +3,6 @@ package commonHTTP
 import (
 	"fmt"
 	"github.com/ifchange/botKit/config"
-	"github.com/labstack/echo"
-	"net/http"
 	"strings"
 )
 
@@ -74,37 +72,4 @@ func (err *ErrCommon) Error() string {
 		return "nil errCommon in errHandler package"
 	}
 	return err.ErrMsg
-}
-
-func ErrHandler(err error, c echo.Context) {
-	var (
-		code = http.StatusOK
-		rsp  = MakeRsp(nil)
-	)
-
-	if errC, ok := err.(*ErrCommon); ok {
-		switch config.GetConfig().Environment {
-		case "dev":
-			rsp.R.ErrNo = errC.ErrCode
-			rsp.R.ErrMsg = errC.ErrMsg + errC.LogMsg
-		default:
-			rsp.R.ErrNo = errC.ErrCode
-			rsp.R.ErrMsg = errC.ErrMsg
-		}
-	} else {
-		rsp.R.ErrNo = -1
-		rsp.R.ErrMsg = "SYSTEM ERROR, please call backend ASAP"
-	}
-
-	// Send response
-	if !c.Response().Committed {
-		if c.Request().Method == echo.HEAD { // echo Issue #608
-			err = c.NoContent(code)
-		} else {
-			err = c.JSON(code, rsp)
-		}
-		if err != nil {
-			c.Logger().Error(err)
-		}
-	}
 }

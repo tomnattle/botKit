@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ifchange/botKit/commonHTTP"
+	"github.com/ifchange/botKit/config"
 	"github.com/labstack/echo"
 	"io/ioutil"
 	"net/http"
@@ -70,15 +71,13 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 				stack := make([]byte, 4<<10)
 				length := runtime.Stack(stack, true)
 				c.Logger().Printf("[PANIC RECOVER] %v %s", err, stack[:length])
-				c.Context.Error(err)
 			}
 		}()
 
-		if err := h(c); err == nil {
-			return err
+		if err := h(c); err != nil {
+			errHandler(err, c)
 		}
-		c.Logger.Printf("Logger error err")
-		return h(c)
+		return nil
 	}
 }
 
@@ -88,4 +87,43 @@ func (c Context) Logger() *Logger {
 
 func (c Context) Request() *http.Request {
 	return c.request
+}
+
+func errHandler(err error, c Context) {
+	var (
+		code   = http.StatusOK
+		rsp    = commonHTTP.MakeRsp(nil)
+		logMsg = ""
+	)
+
+	if errC, ok := err.(*commonHTTP.ErrCommon); ok {
+		switch config.GetConfig().Environment {
+		case "dev":
+			rsp.R.ErrNo = errC.ErrCode
+			rsp.R.ErrMsg = errC.ErrMsg + errC.LogMsg
+			logMsg = errC.LogMsg
+		default:
+			rsp.R.ErrNo = errC.ErrCode
+			rsp.R.ErrMsg = errC.ErrMsg
+			logMsg = errC.LogMsg
+		}
+	} else {
+		rsp.R.ErrNo = -1
+		rsp.R.ErrMsg = "SYSTEM ERROR, please call backend ASAP"
+		logMsg = err.Error()
+	}
+
+	c.Logger().Warnf("err:%v info:%v", rsp.R.ErrNo, logMsg)
+
+	// Send response
+	if !c.Response().Committed {
+		if c.Request().Method == echo.HEAD { // echo Issue #608
+			err = c.NoContent(code)
+		} else {
+			err = c.JSON(code, rsp)
+		}
+		if err != nil {
+			c.Logger().Errorf("errHandler %v", err)
+		}
+	}
 }
