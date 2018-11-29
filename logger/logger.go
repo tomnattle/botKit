@@ -16,30 +16,30 @@ func Debugf(format string, v ...interface{}) {
 	if constEnvironment == "prod" || constEnvironment == "test" {
 		return
 	}
-	Printf("[DEBUG]"+format, v...)
+	Printf("DEBUG", format, v...)
 }
 
 func Infof(format string, v ...interface{}) {
 	if constEnvironment == "prod" {
 		return
 	}
-	Printf("[INFO]"+format, v...)
+	Printf("INFO", format, v...)
 }
 
 func Warnf(format string, v ...interface{}) {
-	Printf("[WARN]"+format, v...)
+	Printf("WARN", format, v...)
 }
 
 func Errorf(format string, v ...interface{}) {
-	Printf("[ERROR]"+format, v...)
+	Printf("ERROR", format, v...)
 }
 
-func Printf(format string, v ...interface{}) {
-	logBinary := bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf(" Time:%s ", time.Now()), fmt.Sprintf(format, v...))).Bytes()
+func Printf(level string, format string, v ...interface{}) {
+	logBinary := bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf("[%s] Time:%s", level, time.Now()), fmt.Sprintf(format, v...))).Bytes()
 	if len(logBinary) > 1000 {
 		logBinary = logBinary[:1000]
 	}
-	writer.Write(logBinary)
+	GetOutput().Write(logBinary)
 }
 
 var (

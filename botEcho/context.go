@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
+	"github.com/ifchange/botKit/util"
 	"github.com/labstack/echo"
 	"io/ioutil"
 	"net/http"
@@ -61,6 +62,9 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 		c.M = commonRequest.R.M
 		c.P = commonRequest.R.P
 
+		if len(c.CommonHeader.LogID) < 5 {
+			c.CommonHeader.LogID = util.RandStr(22)
+		}
 		c.logger = newLogger(c.CommonHeader.LogID, c.request)
 
 		defer func() {
@@ -69,9 +73,9 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 				if !ok {
 					err = fmt.Errorf("%v", r)
 				}
-				stack := make([]byte, 4<<10)
+				stack := make([]byte, 4<<12)
 				length := runtime.Stack(stack, true)
-				c.Logger().Errorf("[PANIC RECOVER] %v %s", err, stack[:length])
+				errHandler(fmt.Errorf("[PANIC RECOVER] %v %s", err, stack[:length]), c)
 			}
 		}()
 

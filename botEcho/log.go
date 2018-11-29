@@ -6,10 +6,6 @@ import (
 	"net/http"
 )
 
-const (
-	format = "LogID:%s Path:%s RemoteIP:%s Info:%v"
-)
-
 type Logger struct {
 	format func(info string) string
 }
@@ -17,8 +13,8 @@ type Logger struct {
 func newLogger(logID string, req *http.Request) *Logger {
 	return &Logger{
 		format: func(info string) string {
-			commonLog := fmt.Sprintf(format, logID, req.RequestURI, req.RemoteAddr, info)
-			return commonLog
+			return fmt.Sprintf("LogID:%s Path:%s RemoteIP:%s Info:%v",
+				logID, req.RequestURI, req.RemoteAddr, info)
 		},
 	}
 }
@@ -37,8 +33,4 @@ func (log *Logger) Warnf(format string, v ...interface{}) {
 
 func (log *Logger) Errorf(format string, v ...interface{}) {
 	logger.Errorf(log.format(fmt.Sprintf(format, v...)))
-}
-
-func (log *Logger) Printf(format string, v ...interface{}) {
-	logger.Printf(log.format(fmt.Sprintf(format, v...)))
 }
