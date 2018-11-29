@@ -77,7 +77,7 @@ func (lp *LockPool) Unlock(unique interface{}) {
 func (lp *LockPool) Status(unique interface{}) (exist int) {
 	exist, err := lp.conn.Cmd("GET", lp.key(unique)).Int()
 	if err != nil {
-		logger.Printf("lockPool ins %v get status error %v",
+		logger.Warnf("lockPool ins %v get status error %v",
 			lp, err)
 		return 0
 	}

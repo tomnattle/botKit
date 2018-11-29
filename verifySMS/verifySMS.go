@@ -117,7 +117,7 @@ func getAuthCode(redis *Redis.RedisCommon, phone string) ([]*AuthCodeSaver, bool
 	}
 	allAuthCode := []*AuthCodeSaver{}
 	if err := json.Unmarshal(all, &allAuthCode); err != nil {
-		logger.Printf("getAuthCode Unmarshal json error %v", err)
+		logger.Warnf("getAuthCode Unmarshal json error %v", err)
 		return nil, false
 	}
 	return allAuthCode, true
