@@ -78,9 +78,8 @@ func (err *ErrCommon) Error() string {
 
 func ErrHandler(err error, c echo.Context) {
 	var (
-		code   = http.StatusOK
-		rsp    = MakeRsp(nil)
-		logMsg = ""
+		code = http.StatusOK
+		rsp  = MakeRsp(nil)
 	)
 
 	if errC, ok := err.(*ErrCommon); ok {
@@ -88,19 +87,14 @@ func ErrHandler(err error, c echo.Context) {
 		case "dev":
 			rsp.R.ErrNo = errC.ErrCode
 			rsp.R.ErrMsg = errC.ErrMsg + errC.LogMsg
-			logMsg = errC.LogMsg
 		default:
 			rsp.R.ErrNo = errC.ErrCode
 			rsp.R.ErrMsg = errC.ErrMsg
-			logMsg = errC.LogMsg
 		}
 	} else {
 		rsp.R.ErrNo = -1
 		rsp.R.ErrMsg = "SYSTEM ERROR, please call backend ASAP"
-		logMsg = err.Error()
 	}
-
-	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, rsp.R.ErrNo, logMsg)
 
 	// Send response
 	if !c.Response().Committed {

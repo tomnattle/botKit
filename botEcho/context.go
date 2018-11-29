@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 )
 
 type Context struct {
@@ -26,9 +27,10 @@ type Context struct {
 
 func handler(h HandlerFunc) echo.HandlerFunc {
 	return func(echoC echo.Context) error {
+		// make context
 		c := Context{Context: echoC}
 		c.request = echoC.Request()
-
+		// unmarshal
 		reply := commonHTTP.MakeRsp(nil)
 		body, err := ioutil.ReadAll(c.request.Body)
 		if err != nil {
@@ -58,6 +60,24 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 		c.P = commonRequest.R.P
 
 		c.logger = newLogger(c.CommonHeader.LogID, c.request)
+
+		defer func() {
+			if r := recover(); r != nil {
+				err, ok := r.(error)
+				if !ok {
+					err = fmt.Errorf("%v", r)
+				}
+				stack := make([]byte, 4<<10)
+				length := runtime.Stack(stack, true)
+				c.Logger().Printf("[PANIC RECOVER] %v %s", err, stack[:length])
+				c.Context.Error(err)
+			}
+		}()
+
+		if err := h(c); err == nil {
+			return err
+		}
+		c.Logger.Printf("Logger error err")
 		return h(c)
 	}
 }
