@@ -43,7 +43,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 				4001)
 		}
 		commonRequest := &struct {
-			H *commonHTTP.Header `json:"header"`
+			H commonHTTP.Header `json:"header"`
 			R struct {
 				W string           `json:"w"`
 				C string           `json:"c"`
@@ -57,7 +57,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 				fmt.Errorf("common handler unmarshal request body error %v", err),
 				4001)
 		}
-		c.CommonHeader = commonRequest.H
+		c.CommonHeader = &commonRequest.H
 		c.W = commonRequest.R.W
 		c.C = commonRequest.R.C
 		c.M = commonRequest.R.M
