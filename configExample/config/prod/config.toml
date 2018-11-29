@@ -39,6 +39,7 @@ Admin       = "192.168.1.174"
 Dashboard   = "192.168.1.174"
 Center      = "192.168.1.174"
 Interview   = "192.168.1.174"
+Login       = "192.168.1.174"
 
 [AITS]
 URL = "http://tob.rpc/tob_internal_resume"

@@ -66,6 +66,7 @@ type URIConfig struct {
 	Dashboard string `toml:"Dashboard"`
 	Center    string `toml:"Center"`
 	Interview string `toml:"Interview"`
+	Login     string `toml:"Login"`
 }
 
 type AITSConfig struct {
