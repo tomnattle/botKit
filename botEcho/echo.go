@@ -27,6 +27,7 @@ func New() *Server {
 	// init service
 	e := &Server{Echo: echo.New()}
 	e.Logger.SetOutput(logger.GetOutput())
+	e.HTTPErrorHandler = ErrHandler
 	// middleware
 	e.Use(middleware.BodyLimit("5M"))
 

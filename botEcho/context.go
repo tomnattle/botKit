@@ -103,6 +103,14 @@ func (c Context) JSON(response interface{}) error {
 	return c.Context.JSON(http.StatusOK, response)
 }
 
+func ErrHandler(err error, echoC echo.Context) {
+	// make context
+	c := Context{Context: echoC}
+	c.request = echoC.Request()
+	c.logger = newLogger("unknown", c.request)
+	errHandler(err, c)
+}
+
 func errHandler(err error, c Context) {
 	var (
 		code   = http.StatusOK
