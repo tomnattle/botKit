@@ -99,9 +99,12 @@ func (c Context) Logger() *Logger {
 }
 
 func (c Context) GetReq(usefulRequestPointer interface{}) error {
-	err = json.Unmarshal(c.P, usefulRequestPointer)
+	if c.P == nil {
+		return fmt.Errorf("botEcho.Context.GetReq error empty body")
+	}
+	err := json.Unmarshal([]byte(*c.P), usefulRequestPointer)
 	if err != nil {
-		return fmt.Errorf("json unmarshal error %v %v", err, usefulRequestPointer)
+		return fmt.Errorf("botEcho.Context.GetReq error json unmarshal error %v %v", err, usefulRequestPointer)
 	}
 	return nil
 }
