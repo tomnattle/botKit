@@ -35,9 +35,9 @@ func Errorf(format string, v ...interface{}) {
 }
 
 func Printf(level string, format string, v ...interface{}) {
-	logBinary := bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf("[%s] Time:%s", level, time.Now()), fmt.Sprintf(format, v...))).Bytes()
+	logBinary := bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf("[%s] Time:%s", level, time.Now().Format("2006-01-02T15:04:05 Z07:00")), fmt.Sprintf(format, v...))).Bytes()
 	if len(logBinary) > 1000 {
-		logBinary = logBinary[:1000]
+		logBinary = append(logBinary[:1000], []byte("......")...)
 	}
 	GetOutput().Write(logBinary)
 }

@@ -86,7 +86,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 			return nil
 		}
 		if *c.response == nil {
-			c.Logger().Infof("response info nim response")
+			c.Logger().Infof("nil response")
 			return nil
 		}
 		response, err := json.Marshal(**c.response)
