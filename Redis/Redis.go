@@ -73,7 +73,7 @@ func getRedis(cfg *config.RedisConfig) (*RedisCommon, error) {
 		ins.cluster = cluster
 		return ins, nil
 	}
-	conn, err := net.DialTimeout("tcp", cfg.Addr, time.Second * time.Duration(30))
+	conn, err := net.DialTimeout("tcp", cfg.Addr, time.Second*time.Duration(30))
 	if err != nil {
 		return ins, err
 	}
