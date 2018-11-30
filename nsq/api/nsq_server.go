@@ -28,11 +28,11 @@ type NsqServer struct {
 func InitStdNsq() (NsqServerI, error) {
 	pinew, err := publisher.NewPublisher(nsqHost)
 	if err != nil {
-		panic(fmt.Errorf("init config error, newPublisher error, %v", err))
+		panic(fmt.Errorf("init nsq error, newPublisher error, %v", err))
 	}
 	cinew, err := consumer.NewConsumer(topicName, channelName)
 	if err != nil {
-		panic(fmt.Errorf("init config error, newConsumer error, %v", err))
+		panic(fmt.Errorf("init nsq error, newConsumer error, %v", err))
 	}
 	ns := &NsqServer{
 		pi: pinew,
