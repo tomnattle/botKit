@@ -38,3 +38,6 @@ WinMode     = "192.168.1.174:63339"
 Tsketch     = "192.168.1.174:63338"
 Admin       = "192.168.1.174"
 Dashboard   = "192.168.1.174"
+
+[App]
+EmployeeAspirationPostMax   = 5

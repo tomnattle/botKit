@@ -25,6 +25,7 @@ type Config struct {
 	SMS             *SMSConfig    `toml:"SMS"`
 	URI             *URIConfig    `toml:"URI"`
 	Dfs             *DfsConfig    `toml:"Dfs"`
+	App             map[string] interface{}	`toml:"App"`
 }
 
 type DfsConfig struct {
