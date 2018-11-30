@@ -6,6 +6,7 @@ import (
 	redisCluster "github.com/mediocregopher/radix.v2/cluster"
 	"github.com/mediocregopher/radix.v2/redis"
 	"net"
+	"time"
 )
 
 func init() {
@@ -72,7 +73,7 @@ func getRedis(cfg *config.RedisConfig) (*RedisCommon, error) {
 		ins.cluster = cluster
 		return ins, nil
 	}
-	conn, err := net.Dial("tcp", cfg.Addr)
+	conn, err := net.DialTimeout("tcp", cfg.Addr, time.Second * time.Duration(30))
 	if err != nil {
 		return ins, err
 	}
