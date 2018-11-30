@@ -12,12 +12,41 @@ import (
 	"time"
 )
 
-func Printf(format string, v ...interface{}) {
-	writer.Write(bytes.NewBufferString(fmt.Sprintln(fmt.Sprintf(format, v...))).Bytes())
+func Debugf(format string, v ...interface{}) {
+	if constEnvironment == "prod" || constEnvironment == "test" {
+		return
+	}
+	Printf("DEBUG", format, v...)
+}
+
+func Infof(format string, v ...interface{}) {
+	if constEnvironment == "prod" {
+		return
+	}
+	Printf("INFO", format, v...)
+}
+
+func Warnf(format string, v ...interface{}) {
+	Printf("WARN", format, v...)
+}
+
+func Errorf(format string, v ...interface{}) {
+	Printf("ERROR", format, v...)
+}
+
+func Printf(level string, format string, v ...interface{}) {
+	common := fmt.Sprintf("[%s] Time:%s", level, time.Now().Format("2006-01-02T15:04:05.999999999 Z07:00"))
+	log := fmt.Sprintln(common, fmt.Sprintf(format, v...))
+	logBinary := bytes.NewBufferString(log).Bytes()
+	if len(logBinary) > 1000 {
+		logBinary = append(logBinary[:1000], []byte("......")...)
+	}
+	GetOutput().Write(logBinary)
 }
 
 var (
-	writer *Logger
+	writer           *Logger
+	constEnvironment string
 )
 
 func init() {
@@ -25,6 +54,8 @@ func init() {
 	if cfg == nil {
 		panic("logger config is nil")
 	}
+
+	constEnvironment = config.GetConfig().Environment
 
 	now := time.Now()
 
@@ -79,7 +110,8 @@ func (ins *Logger) fileCheck(now time.Time) {
 		ins.fileName = ins.sourceFileName + ins.timestamp.Format("_2006_01_02")
 	}
 
-	if ins.file == nil || ins.file.Sync() != nil {
+	if _, err := os.Stat(ins.fileName); err != nil || os.IsNotExist(err) ||
+		ins.file == nil || ins.file.Sync() != nil {
 		ins.newLogFile()
 	}
 

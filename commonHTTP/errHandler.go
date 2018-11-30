@@ -3,8 +3,6 @@ package commonHTTP
 import (
 	"fmt"
 	"github.com/ifchange/botKit/config"
-	"github.com/labstack/echo"
-	"net/http"
 	"strings"
 )
 
@@ -51,10 +49,10 @@ func (ins *Response) Errorf(err error, errCode int, msg ...string) error {
 		logMsg += strings.Join(msg, " ")
 	}
 
-	return &errCommon{
-		errCode: errCode,
-		errMsg:  errMsg,
-		logMsg:  logMsg,
+	return &ErrCommon{
+		ErrCode: errCode,
+		ErrMsg:  errMsg,
+		LogMsg:  logMsg,
 	}
 }
 
@@ -63,54 +61,15 @@ type errConfig struct {
 	msg  string
 }
 
-type errCommon struct {
-	errCode int
-	errMsg  string
-	logMsg  string
+type ErrCommon struct {
+	ErrCode int
+	ErrMsg  string
+	LogMsg  string
 }
 
-func (err *errCommon) Error() string {
+func (err *ErrCommon) Error() string {
 	if err == nil {
 		return "nil errCommon in errHandler package"
 	}
-	return err.errMsg
-}
-
-func ErrHandler(err error, c echo.Context) {
-	var (
-		code   = http.StatusOK
-		rsp    = MakeRsp(nil)
-		logMsg = ""
-	)
-
-	if errC, ok := err.(*errCommon); ok {
-		switch config.GetConfig().Environment {
-		case "dev":
-			rsp.R.ErrNo = errC.errCode
-			rsp.R.ErrMsg = errC.errMsg + errC.logMsg
-			logMsg = errC.logMsg
-		default:
-			rsp.R.ErrNo = errC.errCode
-			rsp.R.ErrMsg = errC.errMsg
-			logMsg = errC.logMsg
-		}
-	} else {
-		rsp.R.ErrNo = -1
-		rsp.R.ErrMsg = "SYSTEM ERROR, please call backend ASAP"
-		logMsg = err.Error()
-	}
-
-	c.Logger().Warnf("uri:%s err:%v info:%v", c.Request().RequestURI, rsp.R.ErrNo, logMsg)
-
-	// Send response
-	if !c.Response().Committed {
-		if c.Request().Method == echo.HEAD { // echo Issue #608
-			err = c.NoContent(code)
-		} else {
-			err = c.JSON(code, rsp)
-		}
-		if err != nil {
-			c.Logger().Error(err)
-		}
-	}
+	return err.ErrMsg
 }

@@ -2,7 +2,7 @@ AppID           = 20
 SubAppID        = 3
 AppName         = "botKit"
 ProductID       = 0
-Environment     = "test"
+Environment     = "prod"
 Addr            = ":63339"
 InsideSignature = "123123"
 
@@ -10,7 +10,7 @@ InsideSignature = "123123"
 LogFile     = "/opt/log/botKit.log"
 
 [Dfs]
-Server      = "http://testing2.dfs.rpc/Dfs"
+Server      = "http://dfs.rpc/Dfs"
 
 [MySQL]
 Username    = "devuser"
@@ -33,11 +33,16 @@ DurationMinutes         = 1
 AuthCodeDurationMinutes = 3
 
 [URI]
-ChatBot     = "192.168.1.174:63333"
 WinMode     = "192.168.1.174:63339"
 Tsketch     = "192.168.1.174:63338"
 Admin       = "192.168.1.174"
 Dashboard   = "192.168.1.174"
+Center      = "192.168.1.174"
+Interview   = "192.168.1.174"
+Login       = "192.168.1.174"
+
+[AITS]
+URL = "http://tob.rpc/tob_internal_resume"
 
 [App]
 EmployeeAspirationPostMax   = 5

@@ -3,12 +3,10 @@ package botEcho
 import (
 	"fmt"
 	"github.com/ifchange/botKit/botEcho/grace"
-	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
 	"github.com/ifchange/botKit/logger"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/labstack/gommon/log"
 )
 
 type Server struct {
@@ -28,22 +26,10 @@ func New() *Server {
 		appName, cfg.Addr)
 	// init service
 	e := &Server{Echo: echo.New()}
-	// init log
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Output: logger.GetOutput(),
-	}))
-	if config.GetConfig().Environment == "dev" {
-		e.Logger.SetLevel(log.DEBUG)
-	} else {
-		e.Logger.SetLevel(log.WARN)
-	}
 	e.Logger.SetOutput(logger.GetOutput())
-
+	e.HTTPErrorHandler = ErrHandler
 	// middleware
-	e.Use(middleware.Recover())
-	e.Use(middleware.BodyLimit("2M"))
-	// common error handler
-	e.HTTPErrorHandler = commonHTTP.ErrHandler
+	e.Use(middleware.BodyLimit("5M"))
 
 	e.Server.Addr = cfg.Addr
 	return e
