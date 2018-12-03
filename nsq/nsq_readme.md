@@ -6,6 +6,8 @@
 ```
 +-- api
 |   +-- nsq_server        //对外总线
+|   +-- consumer_server   //对外消费方服务
+|   +-- publisher_server  //对外生产方服务
 |
 +-- publisher             //生产方服务
 |   +-- publisher         //生产方接口

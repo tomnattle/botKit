@@ -18,10 +18,23 @@ func NewPublisher(address string) (*PublisherImpl, error) {
 }
 
 func (p *PublisherImpl) Publish(topic string, message []byte) error {
-	//defer pub.producer.Stop()
 	err := p.producer.Publish(topic, message)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (p *PublisherImpl) MultiPublish(topic string, messages [][]byte) error {
+	err := p.producer.MultiPublish(topic, messages)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *PublisherImpl) Stop() {
+	if p.producer != nil {
+		p.producer.Stop()
+	}
 }
