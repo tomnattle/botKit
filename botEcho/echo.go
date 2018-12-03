@@ -36,6 +36,7 @@ func New() *Server {
 }
 
 func (ins *Server) Run() {
+	defer logger.LastWords()
 	err := grace.Serve(ins.Echo.Server)
 	if err != nil {
 		panic(err)

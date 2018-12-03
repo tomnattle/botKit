@@ -47,6 +47,7 @@ func Printf(level string, format string, v ...interface{}) {
 var (
 	writer           *Logger
 	constEnvironment string
+	stop             bool
 )
 
 func init() {
@@ -63,10 +64,20 @@ func init() {
 		sourceFileName: cfg.LogFile,
 		buffer:         make(chan []byte, 1000),
 		mu:             new(sync.RWMutex),
+		stopSignal:     make(chan bool, 1),
 	}
 	writer.fileCheck(now)
 	go writer.loopFileCheck()
 	go writer.loopLogDump()
+}
+
+func LastWords() {
+	stop = true
+	Printf("SYS", "server is stopped")
+	select {
+	case <-time.After(time.Duration(5) * time.Second):
+	case <-writer.stopSignal:
+	}
 }
 
 type Logger struct {
@@ -78,9 +89,14 @@ type Logger struct {
 	file      *os.File
 
 	mu *sync.RWMutex
+
+	stopSignal chan bool
 }
 
 func (ins *Logger) Write(data []byte) (int, error) {
+	if stop {
+		defer close(ins.buffer)
+	}
 	dataLen := len(data)
 	cp := make([]byte, dataLen)
 	copy(cp, data)
@@ -168,4 +184,6 @@ func (ins *Logger) loopLogDump() {
 		}
 		ins.mu.RUnlock()
 	}
+	ins.stopSignal <- true
+	fmt.Printf("logger loop log dump is stopped\n")
 }
