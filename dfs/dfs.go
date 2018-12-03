@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/ifchange/botKit/commonHTTP"
 	"github.com/ifchange/botKit/config"
-	"io/ioutil"
+	"github.com/ifchange/botKit/logger"
 	"net/http"
 )
 
@@ -19,143 +19,123 @@ func init() {
 	}
 }
 
-type Response struct {
-	ErrNo   int64       `json:"err_no"`
-	ErrMsg  string      `json:"err_msg"`
-	Results interface{} `json:"results"`
-}
-
-type Result struct {
-	Header   commonHTTP.Header `json:"header"`
-	Response Response          `json:"response"`
-}
-
-type ReadRequest struct {
+type Dfs struct {
 	GroupName   string `json:"groupname"`
 	FileName    string `json:"filename"`
 	OffSet      int    `json:"offset"`
 	Length      int    `json:"length"`
 	ContentType string `json:"contentType"`
+	Content     string `json:"content"`
+	Ext 		string `json:"ext"`
 }
 
-func Read(r ReadRequest) (*Response, error) {
-	if r.GroupName == "" || r.FileName == "" {
-		return nil, fmt.Errorf("params error")
+func (d *Dfs) Read() (string, error) {
+	if d.GroupName == "" || d.FileName == "" {
+		logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "groupname or filename is empty")
+		return "", fmt.Errorf("groupname or filename is empty")
 	}
 
-	req := &ReadRequest{}
-	reqBody := commonHTTP.MakeReq(&req)
+	reqBody := commonHTTP.MakeReq(nil)
 
 	reqBody.R.C = "Dfs"
 	reqBody.R.M = "download"
-	reqBody.R.P = r
+	reqBody.R.P = d
 
 	post, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("json marshal error")
+		logger.Errorf("params %s; error:%s", fmt.Sprintf("%#v", d), "json marshal error")
+		return "", fmt.Errorf("json marshal error")
 	}
 
 	for i := 1; i <= 3; i++ {
 		request, err := http.NewRequest("POST", cfg.Server, bytes.NewBuffer(post))
 		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			continue
 		}
 		response, err := http.DefaultClient.Do(request)
 		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			continue
 		}
 		if response.StatusCode != 200 {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "status not 200")
 			continue
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		body := ""
+		err = commonHTTP.GetRsp(response.Body, &body)
 		if err != nil {
-			return nil, err
-		}
-		result := Result{}
-		err = json.Unmarshal(data, &result)
-		if err != nil {
-			return nil, err
+			logger.Errorf("params %s; error:%s", fmt.Sprintf("%#v", d), err.Error())
+			return "", err
 		}
 
-		if result.Response.ErrMsg != "" {
-			return nil, fmt.Errorf("read error: %s", result.Response.ErrMsg)
-		}
-
-		return &result.Response, nil
+		return body, nil
 	}
 
-	return nil, fmt.Errorf("read error")
+	logger.Errorf("params %s; error:%s", fmt.Sprintf("%#v", d), "read error")
+	return "", fmt.Errorf("read error")
 }
 
-type UploadRequest struct {
-	Content     string `json:"content"`
-	Ext         string `json:"ext"`
-	ContentType string `json:"contentType"`
-}
-
-func Write(w UploadRequest) (*Response, error) {
-	if w.Content == "" {
+func (d *Dfs) Write() (*Dfs, error) {
+	if d.Content == "" {
+		logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "content is empty")
 		return nil, fmt.Errorf("params error")
 	}
 
-	if w.ContentType == "" {
-		w.ContentType = "json"
-	}
-	if w.Ext == "" {
-		w.Ext = "txt"
-	}
-
-	req := &ReadRequest{}
-	reqBody := commonHTTP.MakeReq(&req)
+	reqBody := commonHTTP.MakeReq(nil)
 
 	reqBody.R.C = "Dfs"
 	reqBody.R.M = "upload"
-	reqBody.R.P = w
+	reqBody.R.P = d
 
 	post, err := json.Marshal(reqBody)
 	if err != nil {
+		logger.Errorf("params %s; error:%s", fmt.Sprintf("%#v", d), "json marshal error")
 		return nil, fmt.Errorf("json marshal error")
 	}
 
 	for i := 1; i <= 3; i++ {
 		request, err := http.NewRequest("POST", cfg.Server, bytes.NewBuffer(post))
 		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			continue
 		}
 		response, err := http.DefaultClient.Do(request)
 		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			continue
 		}
 		if response.StatusCode != 200 {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "status not 200")
 			continue
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		err = commonHTTP.GetRsp(response.Body, d)
 		if err != nil {
-			return nil, err
-		}
-		result := Result{}
-		err = json.Unmarshal(data, &result)
-		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			return nil, err
 		}
 
-		if result.Response.ErrMsg != "" {
-			return nil, fmt.Errorf("read error: %s", result.Response.ErrMsg)
+		if d.GroupName == "" || d.FileName == "" {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "upload error")
+			continue
 		}
 
-		return &result.Response, nil
+		return d, nil
 	}
+
+	logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "upload error")
 	return nil, fmt.Errorf("upload error")
 }
 
-func Del(d ReadRequest) (bool, error) {
+func (d *Dfs) Del() (bool, error) {
 	if d.GroupName == "" || d.FileName == "" {
+		logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "groupname or filename is empty")
 		return false, fmt.Errorf("params error")
 	}
-	req := &ReadRequest{}
-	reqBody := commonHTTP.MakeReq(&req)
+
+	reqBody := commonHTTP.MakeReq(nil)
 
 	reqBody.R.C = "Dfs"
 	reqBody.R.M = "del"
@@ -163,38 +143,35 @@ func Del(d ReadRequest) (bool, error) {
 
 	post, err := json.Marshal(reqBody)
 	if err != nil {
+		logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "json marshal error")
 		return false, fmt.Errorf("json marshal error")
 	}
 
 	for i := 1; i <= 3; i++ {
 		request, err := http.NewRequest("POST", cfg.Server, bytes.NewBuffer(post))
 		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			continue
 		}
 		response, err := http.DefaultClient.Do(request)
 		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			continue
 		}
 		if response.StatusCode != 200 {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "status not 200")
 			continue
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		err = commonHTTP.GetRsp(response.Body, nil)
 		if err != nil {
+			logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), err.Error())
 			return false, err
-		}
-		result := Result{}
-		err = json.Unmarshal(data, &result)
-		if err != nil {
-			return false, err
-		}
-
-		if result.Response.ErrMsg != "" {
-			return false, fmt.Errorf("read error: %s", result.Response.ErrMsg)
 		}
 
 		return true, nil
 	}
 
+	logger.Errorf("params %s error:%s", fmt.Sprintf("%#v", d), "del error")
 	return false, fmt.Errorf("del error")
 }
