@@ -185,5 +185,5 @@ func (ins *Logger) loopLogDump() {
 		ins.mu.RUnlock()
 	}
 	ins.stopSignal <- true
-	fmt.Printf("logger loop log dump is stopped\n")
+	fmt.Printf("logger is stopped\n")
 }
