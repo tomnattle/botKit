@@ -40,8 +40,16 @@ func GetConn() (*sql.DB, error) {
 
 func getConn(cfg *config.MySQLConfig) (*sql.DB, error) {
 	// "用户名:密码@tcp(IP:端口)/数据库?charset=utf8mb4&sql_notes=false&sql_notes=false&timeout=90s&collation=utf8mb4_general_ci&parseTime=True&loc=Local"
-	source := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&sql_notes=false&sql_notes=false&timeout=90s&collation=utf8mb4_general_ci&parseTime=True&loc=Local",
+	source := getConnStr(cfg)
+	return sql.Open("mysql", source)
+}
+
+func getConnStr(cfg *config.MySQLConfig) string {
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&sql_notes=false&sql_notes=false&timeout=90s&collation=utf8mb4_general_ci&parseTime=True&loc=Local",
 		cfg.Username, cfg.Password,
 		cfg.Addr, cfg.DB)
-	return sql.Open("mysql", source)
+}
+
+func GetConnStr(cfg *config.MySQLConfig) string {
+	return getConnStr(cfg)
 }

@@ -5,7 +5,7 @@ import (
 {{if gt $ilen 0}}
 {{range .Imports}}"{{.}}"{{end}}
 {{end}}
-    "github.com/qinhao/botKit/xorm"
+    "github.com/ifchange/botKit/xorm"
 )
 
 
@@ -30,19 +30,24 @@ func (m *{{Mapper .Name}}) TableName() string {
 	return "{{.Name}}"
 }
 
-func Create{{Mapper .Name}}(obj interface{}) (int64, error) {
+func Create{{Mapper .Name}}(obj *{{Mapper .Name}}) (int64, error) {
 	return xorm.ORM().Insert(obj)
 }
 
-func Update{{Mapper .Name}}(obj interface{}) (int64, error) {
+func Update{{Mapper .Name}}(obj *{{Mapper .Name}}) (int64, error) {
 	return xorm.ORM().Update(obj)
 }
 
-func Delete{{Mapper .Name}}(id int, obj interface{}) (int64, error) {
+func Delete{{Mapper .Name}}(id int, obj *{{Mapper .Name}}) (int64, error) {
 	return xorm.ORM().Id(id).Delete(obj)
 }
 
-func Get{{Mapper .Name}}ByID(id int64, obj interface{}) error {
+func SoftDelete{{Mapper .Name}}ByID(id int, obj *{{Mapper .Name}})(int64, error) {
+	obj.IsDeleted = 1
+	return xorm.ORM().Id(id).Update(obj)
+}
+
+func Get{{Mapper .Name}}ByID(id int64, obj *{{Mapper .Name}}) error {
 	has, err := xorm.ORM().Id(id).Get(obj)
 	if err != nil {
 		return err
