@@ -16,3 +16,11 @@ func MakeReq(usefulRequestPointer interface{}) *Request {
 	ins.R.P = usefulRequestPointer
 	return ins
 }
+
+func MakeReqWithLogID(logID string, usefulRequestPointer interface{}) *Request {
+	ins := &Request{}
+	ins.H = *commonHeader
+	ins.H.LogID = logID
+	ins.R.P = usefulRequestPointer
+	return ins
+}

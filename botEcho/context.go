@@ -66,7 +66,7 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 		if len(c.CommonHeader.LogID) < 5 {
 			c.CommonHeader.LogID = util.RandStr(22)
 		}
-		c.logger = newLogger(c.CommonHeader.LogID, c.request)
+		c.logger = newLogger(c.LogID(), c.request)
 
 		defer func() {
 			if r := recover(); r != nil {
@@ -101,6 +101,10 @@ func handler(h HandlerFunc) echo.HandlerFunc {
 
 func (c Context) Logger() *Logger {
 	return c.logger
+}
+
+func (c Context) LogID() string {
+	return c.CommonHeader.LogID
 }
 
 func (c Context) GetReq(usefulRequestPointer interface{}) error {
