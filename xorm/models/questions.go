@@ -7,14 +7,16 @@ import (
 )
 
 type Questions struct {
-	xorm.Base `xorm:"extemds"`
-
-	Type    int    `json:"type" xorm:"not null default 0 comment('0:单选题 1:封闭主观题 2:非封闭主观题') index(idx_type_axis_is_deleted) INT(11)"`
-	Axis0   int    `json:"axis_0" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
-	Axis1   int    `json:"axis_1" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
-	Axis2   int    `json:"axis_2" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
-	Text    string `json:"text" xorm:"not null TEXT"`
-	Options string `json:"options" xorm:"not null default '' comment('optionID,optionID') VARCHAR(255)"`
+	Id        int       `json:"id" xorm:"not null pk autoincr INT(11)"`
+	Type      int       `json:"type" xorm:"not null default 0 comment('0:单选题 1:封闭主观题 2:非封闭主观题') index(idx_type_axis_is_deleted) INT(11)"`
+	Axis0     int       `json:"axis_0" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
+	Axis1     int       `json:"axis_1" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
+	Axis2     int       `json:"axis_2" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
+	Text      string    `json:"text" xorm:"not null TEXT"`
+	Options   string    `json:"options" xorm:"not null default '' comment('optionID,optionID') VARCHAR(255)"`
+	IsDeleted int       `json:"is_deleted" xorm:"not null default 0 index(idx_type_axis_is_deleted) TINYINT(4)"`
+	UpdatedAt time.Time `json:"updated_at" xorm:"default 'CURRENT_TIMESTAMP' ON UPDATE 'CURRENT_TIMESTAMP' TIMESTAMP"`
+	CreatedAt time.Time `json:"created_at" xorm:"default 'CURRENT_TIMESTAMP' TIMESTAMP"`
 }
 
 func (m *Questions) GetId() (val int) {

@@ -11,9 +11,8 @@ import (
 
 {{range .Tables}}
 type {{Mapper .Name}} struct {
-	xorm.Base `xorm:"extemds"`
 {{$table := .}}
-{{range .ColumnsSeq}}{{$col := $table.GetColumn .}}	{{if eq $col.Name "id" "is_deleted" "updated_at" "created_at"}}{{else}}{{Mapper $col.Name}}	{{Type $col}} {{Tag $table $col}}{{end}}
+{{range .ColumnsSeq}}{{$col := $table.GetColumn .}} {{if eq $col.Name "updated_at"}}UpdatedAt time.Time `json:"updated_at" xorm:"default 'CURRENT_TIMESTAMP' ON UPDATE 'CURRENT_TIMESTAMP' TIMESTAMP"`{{else}}{{Mapper $col.Name}} {{Type $col}} {{Tag $table $col}}{{end}}
 {{end}}
 }
 
