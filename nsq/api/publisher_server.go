@@ -1,7 +1,7 @@
 package api
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/ifchange/botKit/nsq/message"
 	"github.com/ifchange/botKit/nsq/publisher"
@@ -18,7 +18,7 @@ type PublisherP struct {
 func NewPublisher(pp *PublisherP) (PublisherServerI) {
 	pinew, err := publisher.NewPublisher(pp.nsqHost)
 	if err != nil {
-		log.Fatal("")
+		panic(fmt.Errorf("NewPublisher error, %v", err))
 	}
 	ps := &PublisherServer{
 		pi: pinew,

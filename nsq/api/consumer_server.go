@@ -24,7 +24,7 @@ type ConsumerP struct {
 func NewConsumer(cp *ConsumerP) (ConsumerServerI) {
 	cinew, err := consumer.NewConsumer(cp.topicName, cp.channelName)
 	if err != nil {
-		log.Fatal("new consumer error ", err.Error())
+		panic(fmt.Errorf("NewConsumer error, %v", err))
 	}
 	cs := &ConsumerServer{
 		ci:         cinew,
