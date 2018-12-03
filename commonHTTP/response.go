@@ -8,7 +8,7 @@ import (
 )
 
 type Response struct {
-	H *Header `json:"header"`
+	H Header `json:"header"`
 	R struct {
 		ErrNo   int         `json:"err_no"`
 		ErrMsg  string      `json:"err_msg"`
@@ -36,7 +36,7 @@ func GetRsp(reader io.Reader, usefulResponsePointer interface{}) error {
 
 func MakeRsp(usefulResponsePointer interface{}) *Response {
 	ins := &Response{}
-	ins.H = commonHeader
+	ins.H = *commonHeader
 	ins.R.Results = usefulResponsePointer
 	return ins
 }
