@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"os"
 )
 
 var (
-	configFile string
-	config     *Config
+	config *Config
 )
 
 type Config struct {
@@ -74,12 +74,19 @@ type AITSConfig struct {
 }
 
 func init() {
-	flag.StringVar(&configFile, "cfg",
+	var (
+		cfg string
+	)
+	if cfg = os.Getenv("CFG"); len(cfg) > 0 {
+		initConfig(cfg)
+		return
+	}
+	flag.StringVar(&cfg, "cfg",
 		"unset config file",
 		"configFile is required.\n-cfg ./config/*/config.toml\ndev test prod\n")
 	flag.Parse()
-	initConfig()
-	initEnvironment()
+	initConfig(cfg)
+	return
 }
 
 func GetConfig() *Config {
@@ -89,20 +96,20 @@ func GetConfig() *Config {
 	return config
 }
 
-func initEnvironment() {
-	switch config.Environment {
-	case "dev", "test", "prod":
-	default:
-		panic(fmt.Errorf("init config error, try find environment error, %v",
-			config.Environment))
-	}
-}
-
-func initConfig() {
+func initConfig(configFile string) {
 	config = &Config{}
 	_, err := toml.DecodeFile(configFile, config)
 	if err != nil {
 		panic(fmt.Errorf("init config error, try decode config file %v, %v",
 			configFile, err))
 	}
+
+	switch config.Environment {
+	case "dev", "test", "prod":
+	default:
+		panic(fmt.Errorf("init config error, try find environment error, %v",
+			config.Environment))
+	}
+
+	fmt.Printf("init config success, config file path is %s\n", configFile)
 }
