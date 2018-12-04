@@ -6,17 +6,18 @@ import (
 	"github.com/ifchange/botKit/xorm"
 )
 
+// Note: struct field string with digit will not split by '_', so 'Axis0' will be 'axis0' with xorm, not 'axis_0'.
+
 type Questions struct {
-	Id        int       `json:"id" xorm:"not null pk autoincr INT(11)"`
-	Type      int       `json:"type" xorm:"not null default 0 comment('0:单选题 1:封闭主观题 2:非封闭主观题') index(idx_type_axis_is_deleted) INT(11)"`
-	Axis0     int       `json:"axis_0" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
-	Axis1     int       `json:"axis_1" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
-	Axis2     int       `json:"axis_2" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
-	Text      string    `json:"text" xorm:"not null TEXT"`
-	Options   string    `json:"options" xorm:"not null default '' comment('optionID,optionID') VARCHAR(255)"`
-	IsDeleted int       `json:"is_deleted" xorm:"not null default 0 index(idx_type_axis_is_deleted) TINYINT(4)"`
-	UpdatedAt time.Time `json:"updated_at" xorm:"default 'CURRENT_TIMESTAMP' ON UPDATE 'CURRENT_TIMESTAMP' TIMESTAMP"`
-	CreatedAt time.Time `json:"created_at" xorm:"default 'CURRENT_TIMESTAMP' TIMESTAMP"`
+	xorm.Base `xorm:"extends"`
+
+	Id      int    `json:"id" xorm:"not null pk autoincr INT(11)"`
+	Type    int    `json:"type" xorm:"not null default 0 comment('0:单选题 1:封闭主观题 2:非封闭主观题') index(idx_type_axis_is_deleted) INT(11)"`
+	Axis0   int    `json:"axis0" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
+	Axis1   int    `json:"axis1" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
+	Axis2   int    `json:"axis2" xorm:"not null default 0 index(idx_type_axis_is_deleted) INT(11)"`
+	Text    string `json:"text" xorm:"not null TEXT"`
+	Options string `json:"options" xorm:"not null default '' comment('optionID,optionID') VARCHAR(255)"`
 }
 
 func (m *Questions) GetId() (val int) {
@@ -97,8 +98,8 @@ func CreateQuestions(obj *Questions) (int64, error) {
 	return xorm.ORM().Insert(obj)
 }
 
-func UpdateQuestions(obj *Questions) (int64, error) {
-	return xorm.ORM().Update(obj)
+func UpdateQuestions(id int, obj *Questions) (int64, error) {
+	return xorm.ORM().Id(id).Update(obj)
 }
 
 func DeleteQuestions(id int, obj *Questions) (int64, error) {
@@ -128,7 +129,12 @@ func QuestionsSearch(cond *xorm.Conditions) (ts []Questions, err error) {
 
 	query, args := cond.Parse()
 
-	err = xorm.ORM().Where(query, args).Find(&ts)
+	if cond.Limit != 0 || cond.Offset != 0 {
+		err = xorm.ORM().Where(query, args...).Limit(cond.Limit, cond.Offset).Find(&ts)
+	} else {
+		err = xorm.ORM().Where(query, args...).Find(&ts)
+	}
+
 	if err != nil {
 		return
 	}

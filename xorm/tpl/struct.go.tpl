@@ -8,11 +8,13 @@ import (
     "github.com/ifchange/botKit/xorm"
 )
 
-
+// Note: struct field string with digit will not split by '_', so 'Axis0' will be 'axis0' with xorm, not 'axis_0'.
 {{range .Tables}}
 type {{Mapper .Name}} struct {
+	xorm.Base `xorm:"extends"`
+
 {{$table := .}}
-{{range .ColumnsSeq}}{{$col := $table.GetColumn .}} {{if eq $col.Name "updated_at"}}UpdatedAt time.Time `json:"updated_at" xorm:"default 'CURRENT_TIMESTAMP' ON UPDATE 'CURRENT_TIMESTAMP' TIMESTAMP"`{{else}}{{Mapper $col.Name}} {{Type $col}} {{Tag $table $col}}{{end}}
+{{range .ColumnsSeq}}{{$col := $table.GetColumn .}} {{if eq $col.Name "is_deleted" "updated_at" "created_at"}}{{else}}{{Mapper $col.Name}} {{Type $col}} {{Tag $table $col}}{{end}}
 {{end}}
 }
 
@@ -33,8 +35,8 @@ func Create{{Mapper .Name}}(obj *{{Mapper .Name}}) (int64, error) {
 	return xorm.ORM().Insert(obj)
 }
 
-func Update{{Mapper .Name}}(obj *{{Mapper .Name}}) (int64, error) {
-	return xorm.ORM().Update(obj)
+func Update{{Mapper .Name}}(id int, obj *{{Mapper .Name}}) (int64, error) {
+	return xorm.ORM().Id(id).Update(obj)
 }
 
 func Delete{{Mapper .Name}}(id int, obj *{{Mapper .Name}}) (int64, error) {
@@ -64,7 +66,12 @@ func {{Mapper .Name}}Search(cond *xorm.Conditions) (ts []{{Mapper .Name}}, err e
 
 	query, args := cond.Parse()
 
-	err = xorm.ORM().Where(query, args).Find(&ts)
+	if cond.Limit != 0 || cond.Offset != 0 {
+		err = xorm.ORM().Where(query, args...).Limit(cond.Limit, cond.Offset).Find(&ts)
+	} else {
+		err = xorm.ORM().Where(query, args...).Find(&ts)
+	}
+
 	if err != nil {
 		return
 	}
