@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	cfg *config.URIConfig
+	cfg *config.NLPConfig
 )
 
 func init() {
-	cfg = config.GetConfig().URI
+	cfg = config.GetConfig().NLP
 	if cfg == nil || cfg.SemblMatchServer == "" {
 		panic("botKit-admin products config is nil")
 	}
