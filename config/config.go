@@ -26,8 +26,12 @@ type Config struct {
 	URI             *URIConfig    `toml:"URI"`
 	Dfs             *DfsConfig    `toml:"Dfs"`
 	AITS            *AITSConfig   `toml:"AITS"`
+	NLP             *NLPConfig    `toml:"NLP"`
 }
 
+type NLPConfig struct {
+	SemblMatchServer string `toml:"SemblMatchServer"`
+}
 type DfsConfig struct {
 	Server string `toml:"Server"`
 }

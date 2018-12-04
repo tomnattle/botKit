@@ -43,3 +43,7 @@ Login       = "192.168.1.174"
 
 [AITS]
 URL = "http://dev.tob.rpc/tob_internal_resume"
+
+[NLP]
+SemblMatchServer = "http://192.168.1.36:9200/semblmatch/"
+
