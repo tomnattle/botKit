@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-xorm/xorm"
+	"github.com/ifchange/botKit/MySQL"
 	"github.com/ifchange/botKit/config"
-	"github.com/qinhao/botKit/MySQL"
 	"time"
 )
 

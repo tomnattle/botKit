@@ -1,6 +1,8 @@
 package xorm
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	defaultLimit  = 10000
