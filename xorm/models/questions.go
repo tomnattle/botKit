@@ -6,6 +6,8 @@ import (
 	"github.com/ifchange/botKit/xorm"
 )
 
+// Note: struct field string with digit will not split by '_', so 'Axis0' will be 'axis0' with xorm, not 'axis_0'.
+
 type Questions struct {
 	xorm.Base `xorm:"extends"`
 
