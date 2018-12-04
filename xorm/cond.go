@@ -41,11 +41,7 @@ func (c Conditions) Parse() (string, []interface{}) {
 	}
 
 	if c.query != "" {
-		c.query = c.query[:len(c.query)-4]
-	}
-
-	if c.Limit != defaultLimit || c.Offset != defaultOffset {
-		c.query += fmt.Sprintf("limit %d,%d)", c.Offset, c.Limit)
+		c.query = c.query[:len(c.query)-5]
 	}
 
 	return c.query, c.args
