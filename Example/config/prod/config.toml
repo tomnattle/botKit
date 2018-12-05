@@ -45,4 +45,4 @@ Login       = "192.168.1.174"
 URL = "http://tob.rpc/tob_internal_resume"
 
 [NLP]
-SemblMatchServer = "http://192.168.7.203:9100/semblmatch/"
+SemblMatchServer = "http://online.nlu.parser.rpc/sentence_similarity" 
