@@ -46,3 +46,4 @@ URL = "http://testing2.tob.rpc/tob_internal_resume"
 
 [NLP]
 SemblMatchServer = "http://testing2.nlpinterviewer.rpc/semblmatch/"
+SentenceToLabel  = "http://testing2.nlu.parser.rpc/sentence_to_label"

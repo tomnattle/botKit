@@ -31,6 +31,7 @@ type Config struct {
 
 type NLPConfig struct {
 	SemblMatchServer string `toml:"SemblMatchServer"`
+	SentenceToLabel  string `toml:"SemblMatchServer"`
 }
 type DfsConfig struct {
 	Server string `toml:"Server"`

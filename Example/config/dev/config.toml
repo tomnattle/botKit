@@ -46,4 +46,4 @@ URL = "http://dev.tob.rpc/tob_internal_resume"
 
 [NLP]
 SemblMatchServer = "http://192.168.1.36:9200/semblmatch/"
-
+SentenceToLabel  = "http://dev.nlu.parser.rpc/sentence_to_label"
